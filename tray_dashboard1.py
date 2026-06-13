@@ -154,14 +154,14 @@ st.markdown(
             margin-bottom: 8px;
         }
         .chart-card-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 800;
             color: #0f172a;
             margin-bottom: 4px;
         }
 
         .chart-card-caption {
-            font-size: 13px;
+            font-size: 15px;
             color: #64748b;
             margin-bottom: 12px;
         }
@@ -300,6 +300,12 @@ st.markdown(
         section.main > div {
             max-width: 100% !important;
         }
+
+        div[data-testid="stExpander"] summary p {
+        font-size: 17px !important;
+        font-weight: 500 !important;
+        color: #0f172a !important;
+    }
 
     </style>
     """,
@@ -818,13 +824,13 @@ if menu == "Beranda":
                             color:#0f172a;
                             font-weight:800;
                         ">
-                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:700; border-bottom:1px solid #cbd5e1;">
+                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:600; border-bottom:1px solid #cbd5e1;">
                                 Nilai NDVI
                             </th>
-                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:700; border-bottom:1px solid #cbd5e1;">
+                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:600; border-bottom:1px solid #cbd5e1;">
                                 Interpretasi Kondisi Vegetasi
                             </th>
-                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:700; border-bottom:1px solid #cbd5e1;">
+                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:600; border-bottom:1px solid #cbd5e1;">
                                 Indikasi Risiko Kekeringan
                             </th>
                         </tr>
@@ -899,17 +905,32 @@ if menu == "Beranda":
                 color_discrete_map=risk_color_map
             )
 
+            pie_text_color_map = {
+                "Sangat Tinggi": "#ffffff",
+                "Tinggi": "#ffffff",
+                "Sedang": "#0f172a",
+                "Rendah": "#ffffff"
+            }
+
+            pie_text_colors = [
+                pie_text_color_map.get(label, "#0f172a")
+                for label in fig_pie.data[0].labels
+            ]
+
             fig_pie.update_traces(
                 textinfo="percent",
-                textfont_size=14
+                textfont=dict(
+                    size=14,
+                    color=pie_text_colors
+                )
             )
 
             fig_pie.update_layout(
                 height=410,
                 margin=dict(l=5, r=5, t=5, b=5),
                 legend_title_text="Indikasi Risiko Kekeringan",
-                paper_bgcolor="#ffffff",
-                plot_bgcolor="#ffffff"
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)"
             )
 
             st.plotly_chart(
@@ -952,8 +973,8 @@ if menu == "Beranda":
                 yaxis_title="",
                 showlegend=False,
                 margin=dict(l=170, r=50, t=5, b=45),
-                paper_bgcolor="#ffffff",
-                plot_bgcolor="#ffffff",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(
                     range=[-0.02, top_low["NDVI"].max() * 1.15],
                     zeroline=True,
@@ -1154,9 +1175,33 @@ if menu == "Beranda":
         fig_treemap.update_traces(
             texttemplate="<b>%{label}</b><br>Prioritas: %{value:.3f}",
             textposition="middle center",
-            textfont_size=13
+            textfont_size=16
         )
 
+        label_to_class = dict(
+            zip(treemap_df["Kabupaten/Kota"], treemap_df["Kelas"])
+        )
+
+        text_colors = []
+
+        for label in fig_treemap.data[0].labels:
+            kelas = label_to_class.get(label, "")
+
+            if kelas in [
+                "Kehijauan Sangat Rendah",
+                "Kehijauan Rendah",
+                "Kehijauan Tinggi"
+            ]:
+                text_colors.append("#ffffff")
+            else:
+                text_colors.append("#0f172a")
+
+        fig_treemap.update_traces(
+            textfont=dict(
+                size=15,
+                color=text_colors
+            )
+        )
         fig_treemap.update_layout(
             height=680,
             margin=dict(l=5, r=5, t=5, b=5),
@@ -1172,11 +1217,120 @@ if menu == "Beranda":
             key="treemap_kondisi_wilayah"
         )
 
-    with st.expander("Lihat Detail Data Wilayah"):
-        st.dataframe(
-            eda_df[["Kabupaten/Kota", "NDVI", "Kelas", "Risiko"]],
-            use_container_width=True,
-            hide_index=True
+    with st.expander("Lihat Urutan Prioritas Pemantauan Wilayah"):
+        detail_prioritas = eda_df.copy()
+
+        detail_prioritas["Skor Prioritas"] = (
+            1 - detail_prioritas["NDVI"]
+        ).clip(lower=0.001)
+
+        detail_prioritas = detail_prioritas.sort_values(
+            "NDVI",
+            ascending=True
+        ).reset_index(drop=True)
+
+        detail_prioritas["Peringkat"] = detail_prioritas.index + 1
+
+        detail_prioritas["Indikasi Risiko Kekeringan"] = (
+            detail_prioritas["Risiko"]
+            .str.replace("Indikasi Risiko ", "", regex=False)
+        )
+
+        detail_prioritas["NDVI"] = detail_prioritas["NDVI"].round(3)
+        detail_prioritas["Skor Prioritas"] = detail_prioritas["Skor Prioritas"].round(3)
+
+        tabel_prioritas = detail_prioritas[
+            [
+                "Peringkat",
+                "Kabupaten/Kota",
+                "NDVI",
+                "Indikasi Risiko Kekeringan",
+                "Skor Prioritas"
+            ]
+        ].copy()
+
+        styled_tabel_prioritas = (
+            tabel_prioritas
+            .style
+            .set_properties(**{
+                "font-size": "15px",
+                "color": "#0f172a"
+            })
+            .set_table_styles([
+                {
+                    "selector": "thead th",
+                    "props": [
+                        ("font-size", "15px"),
+                        ("font-weight", "800"),
+                        ("color", "#0f172a"),
+                        ("background-color", "#f8fafc")
+                    ]
+                }
+            ])
+        )
+
+        rows_prioritas_html = ""
+
+        for _, row in detail_prioritas.iterrows():
+            rows_prioritas_html += f"""
+            <tr>
+                <td>{row["Peringkat"]}</td>
+                <td>{html.escape(str(row["Kabupaten/Kota"]))}</td>
+                <td>{row["NDVI"]:.3f}</td>
+                <td>{row["Indikasi Risiko Kekeringan"]}</td>
+                <td>{row["Skor Prioritas"]:.3f}</td>
+            </tr>
+            """
+
+        st.html(
+            f"""
+            <div style="
+                border:1px solid #dbe2ea;
+                border-radius:10px;
+                overflow:hidden;
+                background:#ffffff;
+            ">
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    color:#0f172a;
+                ">
+                    <thead>
+                        <tr style="background:#f1f5f9;">
+                            <th style="text-align:left; padding:12px; border-bottom:1px solid #cbd5e1; font-size:16px; font-weight:700;">
+                                Peringkat
+                            </th>
+                            <th style="text-align:left; padding:12px; border-bottom:1px solid #cbd5e1; font-size:16px; font-weight:700;">
+                                Kabupaten/Kota
+                            </th>
+                            <th style="text-align:left; padding:12px; border-bottom:1px solid #cbd5e1; font-size:16px; font-weight:700;">
+                                NDVI
+                            </th>
+                            <th style="text-align:left; padding:12px; border-bottom:1px solid #cbd5e1; font-size:16px; font-weight:700;">
+                                Indikasi Risiko Kekeringan
+                            </th>
+                            <th style="text-align:left; padding:12px; border-bottom:1px solid #cbd5e1; font-size:16px; font-weight:700;">
+                                Skor Prioritas
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {rows_prioritas_html}
+                    </tbody>
+                </table>
+            </div>
+
+            <style>
+                tbody td {{
+                    padding:10px 12px;
+                    border-bottom:1px solid #e5e7eb;
+                    font-size:16px;
+                    font-weight:400;
+                    line-height:1.45;
+                }}
+            </style>
+            """
         )
 
 # =========================
