@@ -606,11 +606,26 @@ if menu == "Beranda":
         eda_df["Risiko"] == "Indikasi Risiko Sangat Tinggi"
     ).sum()
 
+    kondisi_umum_kelas = classify_ndvi(rata_ndvi)
+    kondisi_umum_risiko = risk_level(kondisi_umum_kelas).replace("Indikasi ", "")
+
+    risk_card_color_map = {
+        "Risiko Sangat Tinggi": ("#6B3F16", "#FFFFFF", "rgba(255,255,255,0.78)"),
+        "Risiko Tinggi": ("#B7791F", "#FFFFFF", "rgba(255,255,255,0.82)"),
+        "Risiko Sedang": ("#D9C75F", "#1F2937", "#475569"),
+        "Risiko Rendah": ("#2E7D32", "#FFFFFF", "rgba(255,255,255,0.82)")
+    }
+
+    card_bg, card_text, card_desc = risk_card_color_map.get(
+        kondisi_umum_risiko,
+        ("#ffffff", "#0f172a", "#64748b")
+    )
+
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
         metric_card(
-            "Risiko Kekeringan Sangat Tinggi",
+            "Indikasi Risiko Kekeringan Sangat Tinggi",
             f"{jumlah_risiko_sangat_tinggi}",
             "Wilayah prioritas utama pemantauan"
         )
@@ -630,10 +645,53 @@ if menu == "Beranda":
         )
 
     with c4:
-        metric_card(
-            "Dasar Klasifikasi Risiko",
-            "4 Kelas",
-            "Berdasarkan interval nilai NDVI"
+        st.html(
+            f"""
+            <div style="
+                background:#ffffff;
+                border:1px solid #dbe2ea;
+                border-radius:18px;
+                padding:18px 22px;
+                height:170px;
+                box-sizing:border-box;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
+                box-shadow:0 2px 8px rgba(15,23,42,0.04);
+            ">
+                <div style="
+                    font-size:14px;
+                    color:#64748b;
+                    font-weight:500;
+                ">
+                    Kondisi Umum Tahun {selected_year}
+                </div>
+
+                <div style="
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:center;
+                    width:fit-content;
+                    min-width:150px;
+                    background:{card_bg};
+                    color:{card_text};
+                    padding:9px 18px;
+                    border-radius:999px;
+                    font-size:20px;
+                    font-weight:800;
+                    line-height:1.2;
+                    box-sizing:border-box;
+                ">
+                    {kondisi_umum_risiko}
+                </div>
+
+                <div style="
+                    line-height:1.4;
+                ">
+                    Berdasarkan rata-rata NDVI wilayah
+                </div>
+            </div>
+            """
         )
 
     st.markdown(
@@ -721,28 +779,40 @@ if menu == "Beranda":
                 unsafe_allow_html=True
             )
 
+            eda_df["Risiko_Label"] = (
+                eda_df["Risiko"]
+                .str.replace("Indikasi Risiko ", "", regex=False)
+            )
+
             dist = (
-                eda_df["Kelas"]
+                eda_df["Risiko_Label"]
                 .value_counts()
-                .rename_axis("Kelas")
+                .rename_axis("Risiko")
                 .reset_index(name="Jumlah")
             )
 
-            class_order = [
-                "Kehijauan Sangat Rendah",
-                "Kehijauan Rendah",
-                "Kehijauan Sedang",
-                "Kehijauan Tinggi"
+            risk_order = [
+                "Sangat Tinggi",
+                "Tinggi",
+                "Sedang",
+                "Rendah"
             ]
+
+            risk_color_map = {
+                "Sangat Tinggi": "#6B3F16",
+                "Tinggi": "#B7791F",
+                "Sedang": "#D9C75F",
+                "Rendah": "#2E7D32"
+            }
 
             fig_pie = px.pie(
                 dist,
-                names="Kelas",
+                names="Risiko",
                 values="Jumlah",
                 hole=0.45,
-                color="Kelas",
-                category_orders={"Kelas": class_order},
-                color_discrete_map={k: class_color(k) for k in class_order}
+                color="Risiko",
+                category_orders={"Risiko": risk_order},
+                color_discrete_map=risk_color_map
             )
 
             fig_pie.update_traces(
@@ -753,7 +823,7 @@ if menu == "Beranda":
             fig_pie.update_layout(
                 height=410,
                 margin=dict(l=5, r=5, t=5, b=5),
-                legend_title_text="Kategori",
+                legend_title_text="Indikasi Risiko Kekeringan",
                 paper_bgcolor="#ffffff",
                 plot_bgcolor="#ffffff"
             )
