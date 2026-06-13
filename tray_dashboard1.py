@@ -620,10 +620,13 @@ if menu == "Beranda":
 
     st.markdown("")
 
-    left, middle, insight_col = st.columns([1.05, 1.05, 0.9], gap="medium")
+    CARD_HEIGHT = 530
+    CHART_HEIGHT = 410
+
+    left, middle, insight_col = st.columns(3, gap="medium")
 
     with left:
-        with st.container(border=True):
+        with st.container(border=True, height=CARD_HEIGHT):
             st.markdown(
                 """
                 <div class="chart-card-title">Distribusi Tingkat Kehijauan</div>
@@ -680,7 +683,7 @@ if menu == "Beranda":
             )
 
     with middle:
-        with st.container(border=True):
+        with st.container(border=True, height=CARD_HEIGHT):
             st.markdown(
                 """
                 <div class="chart-card-title">Wilayah dengan NDVI Terendah</div>
@@ -734,53 +737,253 @@ if menu == "Beranda":
             )
 
     with insight_col:
-        with st.container(border=True):
-            jumlah_sangat_rendah = (eda_df["Kelas"] == "Kehijauan Sangat Rendah").sum()
-            jumlah_rendah = (eda_df["Kelas"] == "Kehijauan Rendah").sum()
-            jumlah_sedang = (eda_df["Kelas"] == "Kehijauan Sedang").sum()
-            jumlah_tinggi = (eda_df["Kelas"] == "Kehijauan Tinggi").sum()
+        jumlah_sangat_rendah = (eda_df["Kelas"] == "Kehijauan Sangat Rendah").sum()
+        jumlah_rendah = (eda_df["Kelas"] == "Kehijauan Rendah").sum()
+        jumlah_sedang = (eda_df["Kelas"] == "Kehijauan Sedang").sum()
+        jumlah_tinggi = (eda_df["Kelas"] == "Kehijauan Tinggi").sum()
 
-            kelas_dominan = eda_df["Kelas"].value_counts().idxmax()
-            persen_dominan = eda_df["Kelas"].value_counts(normalize=True).max() * 100
+        kelas_dominan = eda_df["Kelas"].value_counts().idxmax()
+        persen_dominan = eda_df["Kelas"].value_counts(normalize=True).max() * 100
 
-            top_prioritas = eda_df.sort_values("NDVI", ascending=True).head(3)
+        top_prioritas = eda_df.sort_values("NDVI", ascending=True).head(3)
 
+        wilayah_utama = top_prioritas.iloc[0]["Kabupaten/Kota"]
+
+        top_prioritas_html = ""
+
+        for nomor, (_, row) in enumerate(top_prioritas.iterrows(), start=1):
+            top_prioritas_html += dedent(f"""
+            <div style="
+                background:#ffffff;
+                border:1px solid #dbe2ea;
+                border-radius:12px;
+                padding:11px 12px;
+                margin-bottom:9px;
+            ">
+                <div style="
+                    font-size:11px;
+                    color:#64748b;
+                    font-weight:800;
+                    margin-bottom:4px;
+                ">
+                    #{nomor}
+                </div>
+                <div style="
+                    font-size:15px;
+                    color:#0f172a;
+                    font-weight:800;
+                    margin-bottom:4px;
+                    line-height:1.35;
+                ">
+                    {html.escape(str(row["Kabupaten/Kota"]))}
+                </div>
+                <div style="
+                    font-size:12px;
+                    color:#475569;
+                    line-height:1.5;
+                    font-weight:500;
+                ">
+                    NDVI <b style="color:#0f172a;">{row["NDVI"]:.3f}</b> · {row["Kelas"]}
+                </div>
+            </div>
+            """).strip()
+
+        with st.container(border=True, height=CARD_HEIGHT):
+        # MARKDOWN 1: judul, biarin
             st.markdown(
                 f"""
-                <div style="min-height:410px;">
-                    <div class="chart-card-title">Ringkasan Insight</div>
-                    <div class="chart-card-caption">
-                        Interpretasi singkat berdasarkan kondisi NDVI tahun {selected_year}
-                    </div>
-
-                    <div style="font-size:14px; line-height:1.8; color:#334155;">
-                        <p><b>Rata-rata NDVI:</b> {rata_ndvi:.3f}</p>
-                        <p><b>Kategori dominan:</b> {kelas_dominan}</p>
-                        <p><b>Proporsi dominan:</b> {persen_dominan:.1f}%</p>
-                        <p><b>Prioritas utama:</b> {jumlah_sangat_rendah} wilayah</p>
-
-                        <p><b>Komposisi wilayah:</b></p>
-                        <ul style="padding-left:18px; margin-top:-8px;">
-                            <li>Sangat rendah: {jumlah_sangat_rendah}</li>
-                            <li>Rendah: {jumlah_rendah}</li>
-                            <li>Sedang: {jumlah_sedang}</li>
-                            <li>Tinggi: {jumlah_tinggi}</li>
-                        </ul>
-
-                        <p><b>Top 3 NDVI terendah:</b></p>
-                        <ol style="padding-left:18px; margin-top:-8px;">
-                            <li>{top_prioritas.iloc[0]["Kabupaten/Kota"]}</li>
-                            <li>{top_prioritas.iloc[1]["Kabupaten/Kota"]}</li>
-                            <li>{top_prioritas.iloc[2]["Kabupaten/Kota"]}</li>
-                        </ol>
-
-                        <p style="color:#64748b; margin-top:12px;">
-                            Wilayah dengan NDVI rendah menjadi prioritas pemantauan awal kondisi vegetasi.
-                        </p>
-                    </div>
+                <div class="chart-card-title">Ringkasan Insight</div>
+                <div class="chart-card-caption">
+                    Gambaran cepat kondisi kehijauan wilayah berdasarkan NDVI tahun {selected_year}
                 </div>
                 """,
                 unsafe_allow_html=True
+            )
+
+            # MARKDOWN 2: isi HTML panjang, ini yang pakai dedent
+            st.html(
+                f"""
+                <div style="
+                    height:{CHART_HEIGHT}px;
+                    box-sizing:border-box;
+                    overflow:auto;
+                    padding-right:6px;
+                    color:#1e293b;
+                    font-family:Arial, sans-serif;
+                ">
+
+                    <div style="
+                        background:linear-gradient(135deg,#f8fafc 0%,#ecfdf5 100%);
+                        border:1px solid #bfdbfe;
+                        border-radius:14px;
+                        padding:14px 15px;
+                        margin-bottom:14px;
+                    ">
+                        <div style="
+                            font-size:11px;
+                            color:#475569;
+                            font-weight:800;
+                            letter-spacing:0.04em;
+                            margin-bottom:6px;
+                        ">
+                            KONDISI UMUM
+                        </div>
+
+                        <div style="
+                            font-size:15px;
+                            line-height:1.7;
+                            color:#334155;
+                            font-weight:500;
+                        ">
+                            Rata-rata NDVI wilayah berada pada nilai 
+                            <b style="color:#0f172a; font-size:16px;">{rata_ndvi:.3f}</b>. 
+                            Kategori dominan adalah 
+                            <b style="color:{class_color(kelas_dominan)}; font-size:15px;">{kelas_dominan}</b> 
+                            dengan proporsi <b style="color:#0f172a;">{persen_dominan:.1f}%</b> dari wilayah yang ditampilkan.
+                        </div>
+                    </div>
+
+                    <div style="
+                        display:grid;
+                        grid-template-columns:1fr 1fr;
+                        gap:10px;
+                        margin-bottom:14px;
+                    ">
+
+                        <div style="
+                            background:#ffffff;
+                            border:1px solid #dbe2ea;
+                            border-radius:12px;
+                            padding:12px;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:800;
+                                margin-bottom:6px;
+                            ">
+                                RATA-RATA NDVI
+                            </div>
+                            <div style="
+                                font-size:30px;
+                                font-weight:850;
+                                color:#0f172a;
+                                line-height:1.1;
+                            ">
+                                {rata_ndvi:.3f}
+                            </div>
+                        </div>
+
+                        <div style="
+                            background:#ffffff;
+                            border:1px solid #dbe2ea;
+                            border-radius:12px;
+                            padding:12px;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:800;
+                                margin-bottom:6px;
+                            ">
+                                PRIORITAS
+                            </div>
+                            <div style="
+                                font-size:30px;
+                                font-weight:850;
+                                color:#B7791F;
+                                line-height:1.1;
+                            ">
+                                {jumlah_sangat_rendah}
+                            </div>
+                            <div style="
+                                font-size:12px;
+                                color:#64748b;
+                                font-weight:600;
+                                margin-top:3px;
+                            ">
+                                wilayah
+                            </div>
+                        </div>
+
+                        <div style="
+                            background:#ffffff;
+                            border:1px solid #dbe2ea;
+                            border-radius:12px;
+                            padding:12px;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:800;
+                                margin-bottom:6px;
+                            ">
+                                DOMINAN
+                            </div>
+                            <div style="
+                                font-size:15px;
+                                font-weight:800;
+                                color:{class_color(kelas_dominan)};
+                                line-height:1.35;
+                            ">
+                                {kelas_dominan}
+                            </div>
+                        </div>
+
+                        <div style="
+                            background:#ffffff;
+                            border:1px solid #dbe2ea;
+                            border-radius:12px;
+                            padding:12px;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                font-weight:800;
+                                margin-bottom:6px;
+                            ">
+                                NDVI TERENDAH
+                            </div>
+                            <div style="
+                                font-size:15px;
+                                font-weight:800;
+                                color:#0f172a;
+                                line-height:1.35;
+                            ">
+                                {html.escape(str(wilayah_utama))}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="
+                        font-size:14px;
+                        font-weight:800;
+                        color:#0f172a;
+                        margin-bottom:10px;
+                    ">
+                        Wilayah Prioritas Pemantauan
+                    </div>
+
+                    {top_prioritas_html}
+
+                    <div style="
+                        background:#fffbeb;
+                        border:1px solid #fcd34d;
+                        border-radius:14px;
+                        padding:12px 13px;
+                        margin-top:12px;
+                        color:#92400e;
+                        font-size:13px;
+                        line-height:1.65;
+                        font-weight:500;
+                    ">
+                        <b>Catatan:</b> Wilayah dengan nilai NDVI rendah dapat dijadikan prioritas awal
+                        untuk pemantauan kondisi vegetasi dan indikasi risiko kekeringan.
+                    </div>
+
+                </div>
+                """
             )
 
     with st.container(border=True):
