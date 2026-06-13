@@ -926,7 +926,7 @@ if menu == "Beranda":
                             font-weight:700;
                             margin-bottom:6px;
                         ">
-                            Apa yang Ditampilkan?
+                            About Dashboard?
                         </div>
 
                         <div style="
@@ -935,9 +935,10 @@ if menu == "Beranda":
                             color:#334155;
                             font-weight:400;
                         ">
-                            Dashboard ini menampilkan kondisi kehijauan vegetasi wilayah Jawa Timur
-                            berdasarkan nilai NDVI. Nilai NDVI kemudian digunakan sebagai dasar untuk
-                            mengelompokkan wilayah ke dalam indikasi risiko kekeringan.
+                            Dashboard ini menyajikan pemantauan kondisi vegetasi wilayah Jawa Timur
+                            berdasarkan nilai NDVI. Nilai NDVI digunakan sebagai indikator tidak langsung
+                            untuk mengidentifikasi wilayah yang berpotensi memerlukan perhatian lebih
+                            terhadap indikasi risiko kekeringan.
                         </div>
                     </div>
 
@@ -954,7 +955,7 @@ if menu == "Beranda":
                             font-weight:700;
                             margin-bottom:6px;
                         ">
-                            Cara Membaca Visualisasi
+                            Home Page
                         </div>
 
                         <div style="
