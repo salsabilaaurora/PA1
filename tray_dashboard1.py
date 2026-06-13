@@ -108,22 +108,29 @@ st.markdown(
         }
 
         .metric-title {
-            font-size: 14px;
-            color: #64748b;
-            font-weight: 500;
+            font-size: 25px;
+            color:#0f172a;
+            font-weight: 700;
             margin-bottom: 6px;
         }
 
         .metric-value {
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 800;
             color: #0f172a;
             line-height: 1.1;
         }
 
+        .metric-help {
+            font-size: 17px;
+            color: #0f172a;
+            line-height: 1.4;
+            margin-top: 6px;
+        }
+
         .metric-desc {
-            font-size: 12px;
-            color: #94a3b8;
+            font-size: 14px;
+            color: #0f172a;
             line-height: 1.4;
             margin-top: 6px;
         }
@@ -618,7 +625,7 @@ if menu == "Beranda":
 
     card_bg, card_text, card_desc = risk_card_color_map.get(
         kondisi_umum_risiko,
-        ("#ffffff", "#0f172a", "#64748b")
+        ("#ffffff", "#0f172a", "#0f172a")
     )
 
     c1, c2, c3, c4 = st.columns(4)
@@ -660,9 +667,11 @@ if menu == "Beranda":
                 box-shadow:0 2px 8px rgba(15,23,42,0.04);
             ">
                 <div style="
-                    font-size:14px;
-                    color:#64748b;
-                    font-weight:500;
+                    font-size:22px;
+                    color:#0f172a;
+                    font-weight:700;
+                    margin-bottom:6px;
+                    line-height:1.15;
                 ">
                     Kondisi Umum Tahun {selected_year}
                 </div>
@@ -675,18 +684,21 @@ if menu == "Beranda":
                     min-width:150px;
                     background:{card_bg};
                     color:{card_text};
-                    padding:9px 18px;
+                    padding:8px 16px;
                     border-radius:999px;
-                    font-size:20px;
+                    font-size:30px;
                     font-weight:800;
-                    line-height:1.2;
+                    line-height:1.1;
                     box-sizing:border-box;
                 ">
                     {kondisi_umum_risiko}
                 </div>
 
                 <div style="
+                    font-size:17px;
+                    color:#0f172a;
                     line-height:1.4;
+                    margin-top:6px;
                 ">
                     Berdasarkan rata-rata NDVI wilayah
                 </div>
@@ -742,16 +754,88 @@ if menu == "Beranda":
                 for col in row.index
             ]
 
-        styled_klasifikasi_df = (
-            klasifikasi_df
-            .style
-            .apply(style_risiko, axis=1)
-        )
+        risk_color_map = {
+            "Sangat Tinggi": ("#6B3F16", "#FFFFFF"),
+            "Tinggi": ("#B7791F", "#FFFFFF"),
+            "Sedang": ("#D9C75F", "#1F2937"),
+            "Rendah": ("#2E7D32", "#FFFFFF")
+        }
 
-        st.dataframe(
-            styled_klasifikasi_df,
-            use_container_width=True,
-            hide_index=True
+        rows_html = ""
+
+        for _, row in klasifikasi_df.iterrows():
+            risiko = row["Indikasi Risiko Kekeringan"]
+            bg_color, text_color = risk_color_map.get(risiko, ("#FFFFFF", "#0F172A"))
+
+            rows_html += f"""
+            <tr>
+                <td style="
+                    padding:10px 12px;
+                    border-bottom:1px solid #e5e7eb;
+                    line-height:1.45;
+                ">
+                    {row["Nilai NDVI"]}
+                </td>
+
+                <td style="
+                    padding:10px 12px;
+                    border-bottom:1px solid #e5e7eb;
+                    line-height:1.45;
+                ">
+                    {row["Interpretasi Kondisi Vegetasi"]}
+                </td>
+
+                <td style="
+                    padding:10px 12px;
+                    border-bottom:1px solid #e5e7eb;
+                    line-height:1.45;
+                    background:{bg_color};
+                    color:{text_color};
+                    font-weight:500;
+                ">
+                    {risiko}
+                </td>
+            </tr>
+            """
+
+        st.html(
+            f"""
+            <div style="
+                border:1px solid #dbe2ea;
+                border-radius:10px;
+                overflow:hidden;
+                background:#ffffff;
+            ">
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    font-size:14px;
+                    color:#0f172a;
+                ">
+                    <thead>
+                        <tr style="
+                            background:#f1f5f9;
+                            color:#0f172a;
+                            font-weight:800;
+                        ">
+                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:700; border-bottom:1px solid #cbd5e1;">
+                                Nilai NDVI
+                            </th>
+                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:700; border-bottom:1px solid #cbd5e1;">
+                                Interpretasi Kondisi Vegetasi
+                            </th>
+                            <th style="text-align:left; padding:12px; font-size:16px; font-weight:700; border-bottom:1px solid #cbd5e1;">
+                                Indikasi Risiko Kekeringan
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {rows_html}
+                    </tbody>
+                </table>
+            </div>
+            """
         )
 
     eda_df["Prioritas"] = (1 - eda_df["NDVI"]).clip(lower=0.001)
