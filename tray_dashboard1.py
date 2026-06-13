@@ -602,15 +602,99 @@ if menu == "Beranda":
     ndvi_max = eda_df["NDVI"].max()
     wilayah_prioritas = (eda_df["Kelas"] == "Kehijauan Sangat Rendah").sum()
 
+    jumlah_risiko_sangat_tinggi = (
+        eda_df["Risiko"] == "Indikasi Risiko Sangat Tinggi"
+    ).sum()
+
     c1, c2, c3, c4 = st.columns(4)
+
     with c1:
-        metric_card("Prioritas Utama Pemantauan", f"{wilayah_prioritas}", "Wilayah dengan NDVI sangat rendah")
+        metric_card(
+            "Risiko Kekeringan Sangat Tinggi",
+            f"{jumlah_risiko_sangat_tinggi}",
+            "Wilayah prioritas utama pemantauan"
+        )
+
     with c2:
-        metric_card("Total Wilayah", f"{total_wilayah}", "Kabupaten/kota Jawa Timur")
+        metric_card(
+            "Rata-rata NDVI",
+            f"{rata_ndvi:.3f}",
+            "Indikator kondisi vegetasi wilayah"
+        )
+
     with c3:
-        metric_card("Rata-rata NDVI", f"{rata_ndvi:.3f}", "Rata-rata seluruh wilayah")
+        metric_card(
+            "Rentang NDVI",
+            f"{ndvi_min:.3f}–{ndvi_max:.3f}",
+            "Nilai minimum–maksimum wilayah"
+        )
+
     with c4:
-        metric_card("Rentang NDVI", f"{ndvi_min:.3f}–{ndvi_max:.3f}", "Minimum–maksimum")
+        metric_card(
+            "Dasar Klasifikasi Risiko",
+            "4 Kelas",
+            "Berdasarkan interval nilai NDVI"
+        )
+
+    st.markdown(
+        """
+        <div style="height:16px;"></div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.expander("Lihat Dasar Klasifikasi Risiko Kekeringan Berbasis NDVI"):
+        klasifikasi_df = pd.DataFrame({
+            "Nilai NDVI": [
+                "NDVI ≤ 0,21",
+                "0,21 < NDVI ≤ 0,42",
+                "0,42 < NDVI ≤ 0,63",
+                "NDVI > 0,63"
+            ],
+            "Interpretasi Kondisi Vegetasi": [
+                "Sinyal vegetasi sangat rendah / non-vegetasi",
+                "Vegetasi tidak rapat",
+                "Vegetasi cukup rapat",
+                "Vegetasi rapat"
+            ],
+            "Indikasi Risiko Kekeringan": [
+                "Sangat Tinggi",
+                "Tinggi",
+                "Sedang",
+                "Rendah"
+            ]
+        })
+
+        def style_risiko(row):
+            risiko = row["Indikasi Risiko Kekeringan"]
+
+            color_map = {
+                "Sangat Tinggi": ("#6B3F16", "#FFFFFF"),
+                "Tinggi": ("#B7791F", "#FFFFFF"),
+                "Sedang": ("#D9C75F", "#1F2937"),
+                "Rendah": ("#2E7D32", "#FFFFFF")
+            }
+
+            bg_color, text_color = color_map.get(risiko, ("#FFFFFF", "#0F172A"))
+
+            return [
+                f"background-color:{bg_color}; color:{text_color}; font-weight:800;"
+                if col == "Indikasi Risiko Kekeringan"
+                else ""
+                for col in row.index
+            ]
+
+        styled_klasifikasi_df = (
+            klasifikasi_df
+            .style
+            .apply(style_risiko, axis=1)
+        )
+
+        st.dataframe(
+            styled_klasifikasi_df,
+            use_container_width=True,
+            hide_index=True
+        )
 
     eda_df["Prioritas"] = (1 - eda_df["NDVI"]).clip(lower=0.001)
 
@@ -629,9 +713,9 @@ if menu == "Beranda":
         with st.container(border=True, height=CARD_HEIGHT):
             st.markdown(
                 """
-                <div class="chart-card-title">Distribusi Tingkat Kehijauan</div>
+                <div class="chart-card-title">Distribusi Indikasi Risiko Kekeringan</div>
                 <div class="chart-card-caption">
-                    Menunjukkan komposisi jumlah wilayah berdasarkan kelas kehijauan NDVI
+                    Menunjukkan komposisi wilayah berdasarkan indikasi risiko kekeringan yang diturunkan dari kelas NDVI
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -737,70 +821,17 @@ if menu == "Beranda":
             )
 
     with insight_col:
-        jumlah_sangat_rendah = (eda_df["Kelas"] == "Kehijauan Sangat Rendah").sum()
-        jumlah_rendah = (eda_df["Kelas"] == "Kehijauan Rendah").sum()
-        jumlah_sedang = (eda_df["Kelas"] == "Kehijauan Sedang").sum()
-        jumlah_tinggi = (eda_df["Kelas"] == "Kehijauan Tinggi").sum()
-
-        kelas_dominan = eda_df["Kelas"].value_counts().idxmax()
-        persen_dominan = eda_df["Kelas"].value_counts(normalize=True).max() * 100
-
-        top_prioritas = eda_df.sort_values("NDVI", ascending=True).head(3)
-
-        wilayah_utama = top_prioritas.iloc[0]["Kabupaten/Kota"]
-
-        top_prioritas_html = ""
-
-        for nomor, (_, row) in enumerate(top_prioritas.iterrows(), start=1):
-            top_prioritas_html += dedent(f"""
-            <div style="
-                background:#ffffff;
-                border:1px solid #dbe2ea;
-                border-radius:12px;
-                padding:11px 12px;
-                margin-bottom:9px;
-            ">
-                <div style="
-                    font-size:11px;
-                    color:#64748b;
-                    font-weight:800;
-                    margin-bottom:4px;
-                ">
-                    #{nomor}
-                </div>
-                <div style="
-                    font-size:15px;
-                    color:#0f172a;
-                    font-weight:800;
-                    margin-bottom:4px;
-                    line-height:1.35;
-                ">
-                    {html.escape(str(row["Kabupaten/Kota"]))}
-                </div>
-                <div style="
-                    font-size:12px;
-                    color:#475569;
-                    line-height:1.5;
-                    font-weight:500;
-                ">
-                    NDVI <b style="color:#0f172a;">{row["NDVI"]:.3f}</b> · {row["Kelas"]}
-                </div>
-            </div>
-            """).strip()
-
         with st.container(border=True, height=CARD_HEIGHT):
-        # MARKDOWN 1: judul, biarin
             st.markdown(
                 f"""
-                <div class="chart-card-title">Ringkasan Insight</div>
+                <div class="chart-card-title">Catatan Interpretasi</div>
                 <div class="chart-card-caption">
-                    Gambaran cepat kondisi kehijauan wilayah berdasarkan NDVI tahun {selected_year}
+                    Panduan membaca dashboard indikasi risiko kekeringan berbasis NDVI tahun {selected_year}
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-            # MARKDOWN 2: isi HTML panjang, ini yang pakai dedent
             st.html(
                 f"""
                 <div style="
@@ -813,173 +844,114 @@ if menu == "Beranda":
                 ">
 
                     <div style="
-                        background:linear-gradient(135deg,#f8fafc 0%,#ecfdf5 100%);
+                        background:#f8fafc;
+                        border:1px solid #dbe2ea;
+                        border-radius:14px;
+                        padding:14px 15px;
+                        margin-bottom:12px;
+                    ">
+                        <div style="
+                            font-size:12px;
+                            color:#334155;
+                            font-weight:700;
+                            margin-bottom:6px;
+                        ">
+                            Apa yang Ditampilkan?
+                        </div>
+
+                        <div style="
+                            font-size:14px;
+                            line-height:1.65;
+                            color:#334155;
+                            font-weight:400;
+                        ">
+                            Dashboard ini menampilkan kondisi kehijauan vegetasi wilayah Jawa Timur
+                            berdasarkan nilai NDVI. Nilai NDVI kemudian digunakan sebagai dasar untuk
+                            mengelompokkan wilayah ke dalam indikasi risiko kekeringan.
+                        </div>
+                    </div>
+
+                    <div style="
+                        background:#eff6ff;
                         border:1px solid #bfdbfe;
                         border-radius:14px;
                         padding:14px 15px;
-                        margin-bottom:14px;
+                        margin-bottom:12px;
                     ">
                         <div style="
-                            font-size:11px;
-                            color:#475569;
-                            font-weight:800;
-                            letter-spacing:0.04em;
+                            font-size:12px;
+                            color:#1d4ed8;
+                            font-weight:700;
                             margin-bottom:6px;
                         ">
-                            KONDISI UMUM
+                            Cara Membaca Visualisasi
                         </div>
 
                         <div style="
-                            font-size:15px;
-                            line-height:1.7;
-                            color:#334155;
-                            font-weight:500;
+                            font-size:14px;
+                            line-height:1.65;
+                            color:#1e3a8a;
+                            font-weight:400;
                         ">
-                            Rata-rata NDVI wilayah berada pada nilai 
-                            <b style="color:#0f172a; font-size:16px;">{rata_ndvi:.3f}</b>. 
-                            Kategori dominan adalah 
-                            <b style="color:{class_color(kelas_dominan)}; font-size:15px;">{kelas_dominan}</b> 
-                            dengan proporsi <b style="color:#0f172a;">{persen_dominan:.1f}%</b> dari wilayah yang ditampilkan.
+                            Donut chart menunjukkan komposisi kelas risiko. Bar chart menunjukkan wilayah
+                            dengan NDVI terendah. Treemap memperlihatkan skala prioritas pemantauan antarwilayah.
+                            Semakin rendah NDVI, semakin tinggi prioritas pemantauan.
                         </div>
                     </div>
 
                     <div style="
-                        display:grid;
-                        grid-template-columns:1fr 1fr;
-                        gap:10px;
-                        margin-bottom:14px;
-                    ">
-
-                        <div style="
-                            background:#ffffff;
-                            border:1px solid #dbe2ea;
-                            border-radius:12px;
-                            padding:12px;
-                        ">
-                            <div style="
-                                font-size:11px;
-                                color:#64748b;
-                                font-weight:800;
-                                margin-bottom:6px;
-                            ">
-                                RATA-RATA NDVI
-                            </div>
-                            <div style="
-                                font-size:30px;
-                                font-weight:850;
-                                color:#0f172a;
-                                line-height:1.1;
-                            ">
-                                {rata_ndvi:.3f}
-                            </div>
-                        </div>
-
-                        <div style="
-                            background:#ffffff;
-                            border:1px solid #dbe2ea;
-                            border-radius:12px;
-                            padding:12px;
-                        ">
-                            <div style="
-                                font-size:11px;
-                                color:#64748b;
-                                font-weight:800;
-                                margin-bottom:6px;
-                            ">
-                                PRIORITAS
-                            </div>
-                            <div style="
-                                font-size:30px;
-                                font-weight:850;
-                                color:#B7791F;
-                                line-height:1.1;
-                            ">
-                                {jumlah_sangat_rendah}
-                            </div>
-                            <div style="
-                                font-size:12px;
-                                color:#64748b;
-                                font-weight:600;
-                                margin-top:3px;
-                            ">
-                                wilayah
-                            </div>
-                        </div>
-
-                        <div style="
-                            background:#ffffff;
-                            border:1px solid #dbe2ea;
-                            border-radius:12px;
-                            padding:12px;
-                        ">
-                            <div style="
-                                font-size:11px;
-                                color:#64748b;
-                                font-weight:800;
-                                margin-bottom:6px;
-                            ">
-                                DOMINAN
-                            </div>
-                            <div style="
-                                font-size:15px;
-                                font-weight:800;
-                                color:{class_color(kelas_dominan)};
-                                line-height:1.35;
-                            ">
-                                {kelas_dominan}
-                            </div>
-                        </div>
-
-                        <div style="
-                            background:#ffffff;
-                            border:1px solid #dbe2ea;
-                            border-radius:12px;
-                            padding:12px;
-                        ">
-                            <div style="
-                                font-size:11px;
-                                color:#64748b;
-                                font-weight:800;
-                                margin-bottom:6px;
-                            ">
-                                NDVI TERENDAH
-                            </div>
-                            <div style="
-                                font-size:15px;
-                                font-weight:800;
-                                color:#0f172a;
-                                line-height:1.35;
-                            ">
-                                {html.escape(str(wilayah_utama))}
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div style="
-                        font-size:14px;
-                        font-weight:800;
-                        color:#0f172a;
-                        margin-bottom:10px;
-                    ">
-                        Wilayah Prioritas Pemantauan
-                    </div>
-
-                    {top_prioritas_html}
-
-                    <div style="
-                        background:#fffbeb;
-                        border:1px solid #fcd34d;
+                        background:#fff7ed;
+                        border:1px solid #fed7aa;
                         border-radius:14px;
-                        padding:12px 13px;
-                        margin-top:12px;
-                        color:#92400e;
-                        font-size:13px;
-                        line-height:1.65;
-                        font-weight:500;
+                        padding:14px 15px;
+                        margin-bottom:12px;
                     ">
-                        <b>Catatan:</b> Wilayah dengan nilai NDVI rendah dapat dijadikan prioritas awal
-                        untuk pemantauan kondisi vegetasi dan indikasi risiko kekeringan.
+                        <div style="
+                            font-size:12px;
+                            color:#9a3412;
+                            font-weight:700;
+                            margin-bottom:6px;
+                        ">
+                            Hal yang Perlu Dipahami
+                        </div>
+
+                        <div style="
+                            font-size:14px;
+                            line-height:1.65;
+                            color:#7c2d12;
+                            font-weight:400;
+                        ">
+                            Kategori risiko pada dashboard ini bersifat indikatif. Artinya, wilayah dengan
+                            risiko tinggi tidak langsung berarti pasti mengalami kekeringan, tetapi menunjukkan
+                            kondisi vegetasi yang perlu diperhatikan lebih lanjut.
+                        </div>
+                    </div>
+
+                    <div style="
+                        background:#ecfdf5;
+                        border:1px solid #bbf7d0;
+                        border-radius:14px;
+                        padding:14px 15px;
+                    ">
+                        <div style="
+                            font-size:12px;
+                            color:#166534;
+                            font-weight:700;
+                            margin-bottom:6px;
+                        ">
+                            Rekomendasi Pemanfaatan
+                        </div>
+
+                        <div style="
+                            font-size:14px;
+                            line-height:1.65;
+                            color:#14532d;
+                            font-weight:400;
+                        ">
+                            Hasil dashboard dapat digunakan sebagai dasar awal untuk menentukan wilayah
+                            prioritas pemantauan. Interpretasi sebaiknya tetap dibandingkan dengan data
+                            pendukung seperti curah hujan, kelembapan, irigasi, dan kondisi lapangan.
+                        </div>
                     </div>
 
                 </div>
