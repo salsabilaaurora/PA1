@@ -8,6 +8,7 @@ from datetime import datetime
 from textwrap import dedent
 import html
 import json
+from pathlib import Path
 
 DASHBOARD_TITLE = "Dashboard Pemantauan NDVI dan Indikasi Risiko Kekeringan Jawa Timur"
 
@@ -369,24 +370,175 @@ def load_classification_data():
 def load_eval_data():
     return pd.read_csv("evaluasi_gstar_jatim.csv")
 
+@st.cache_data
+def load_eval_file(file_name):
+    return pd.read_csv(file_name)
+
+
+@st.cache_data
+def load_lstm_folder(folder_name="Prediksi_LSTM"):
+    folder = Path(folder_name)
+    files = sorted(folder.glob("prediksi_lstm_*.csv"))
+
+    if len(files) == 0:
+        return None, None
+
+    forecast_series = []
+    eval_rows = []
+
+    for file in files:
+        city_name = (
+            file.stem
+            .replace("prediksi_lstm_", "")
+            .replace("_", " ")
+        )
+
+        temp = pd.read_csv(file)
+
+        temp["TANGGAL"] = pd.to_datetime(temp["TANGGAL"])
+        temp = temp.sort_values("TANGGAL")
+
+        aktual = pd.to_numeric(temp["Aktual"], errors="coerce")
+        prediksi = pd.to_numeric(temp["Prediksi"], errors="coerce")
+
+        s = pd.Series(
+            prediksi.values,
+            index=temp["TANGGAL"],
+            name=city_name
+        )
+
+        forecast_series.append(s)
+
+        valid = pd.DataFrame({
+            "Aktual": aktual,
+            "Prediksi": prediksi
+        }).dropna()
+
+        if not valid.empty:
+            error = valid["Aktual"] - valid["Prediksi"]
+
+            mse = np.mean(error ** 2)
+            rmse = np.sqrt(mse)
+            mae = np.mean(np.abs(error))
+
+            nonzero = valid["Aktual"] != 0
+            if nonzero.sum() > 0:
+                mape = np.mean(
+                    np.abs(error[nonzero] / valid.loc[nonzero, "Aktual"])
+                ) * 100
+            else:
+                mape = np.nan
+
+            denom = np.abs(valid["Aktual"]) + np.abs(valid["Prediksi"])
+            smape_valid = denom != 0
+            if smape_valid.sum() > 0:
+                smape = np.mean(
+                    2 * np.abs(error[smape_valid]) / denom[smape_valid]
+                ) * 100
+            else:
+                smape = np.nan
+
+            eval_rows.append({
+                "Kabupaten/Kota": city_name,
+                "MSE": mse,
+                "RMSE": rmse,
+                "MAE": mae,
+                "MAPE (%)": mape,
+                "SMAPE (%)": smape
+            })
+
+    lstm_forecast = pd.concat(forecast_series, axis=1)
+    lstm_forecast.index = pd.to_datetime(lstm_forecast.index)
+    lstm_forecast["tahun"] = lstm_forecast.index.year
+    lstm_forecast["bulan"] = lstm_forecast.index.month
+
+    lstm_eval = pd.DataFrame(eval_rows)
+
+    return lstm_forecast, lstm_eval
+
+@st.cache_data
+def load_historical_ndvi():
+    possible_files = [
+        Path("ndvi17-24.xlsx"),
+        Path("ndvi17-24.xls"),
+        Path("ndvi17-24.csv"),
+        Path("NDVI17-24.xlsx"),
+        Path("NDVI17-24.xls"),
+        Path("NDVI17-24.csv"),
+    ]
+
+    file_path = None
+
+    for file in possible_files:
+        if file.exists():
+            file_path = file
+            break
+
+    if file_path is None:
+        st.error(
+            "File data historis NDVI tidak ditemukan. "
+            "Pastikan file bernama ndvi17-24.xlsx / ndvi17-24.xls / ndvi17-24.csv "
+            "berada di folder yang sama dengan file dashboard."
+        )
+
+        with st.expander("Cek file yang terbaca di folder dashboard"):
+            st.write([str(p) for p in Path(".").glob("*")])
+
+        st.stop()
+
+    if file_path.suffix.lower() in [".xlsx", ".xls"]:
+        hist = pd.read_excel(file_path)
+    else:
+        hist = pd.read_csv(file_path)
+
+    date_col = None
+    for col in hist.columns:
+        if str(col).lower().strip() in ["date", "tanggal", "time", "periode"]:
+            date_col = col
+            break
+
+    if date_col is None:
+        date_col = hist.columns[0]
+
+    hist[date_col] = pd.to_datetime(hist[date_col])
+    hist = hist.set_index(date_col)
+    hist = hist.sort_index()
+
+    hist["tahun"] = hist.index.year
+    hist["bulan"] = hist.index.month
+
+    return hist
+
 df = load_forecast_data()
 df_cls = load_classification_data()
 df_eval = load_eval_data()
+df_hist = load_historical_ndvi()
 
 # =========================
 # DATA MODEL PREDIKSI
 # =========================
 forecast_data_map = {
-    "GSTAR": df,
-    # "GSTAR-ARIMA": df_gstar_arima,
-    # "LSTM": df_lstm,
+    "GSTAR": df
 }
 
 forecast_eval_map = {
-    "GSTAR": df_eval,
-    # "GSTAR-ARIMA": df_eval_gstar_arima,
-    # "LSTM": df_eval_lstm,
+    "GSTAR": df_eval
 }
+
+# GSTAR-ARIMA
+if Path("GSTAR_ARIMA_Forecast_NDVI.csv").exists() and Path("GSTAR_ARIMA_Evaluation_Metrics.csv").exists():
+    df_gstar_arima = load_forecast_file("GSTAR_ARIMA_Forecast_NDVI.csv")
+    df_eval_gstar_arima = load_eval_file("GSTAR_ARIMA_Evaluation_Metrics.csv")
+
+    forecast_data_map["GSTAR-ARIMA"] = df_gstar_arima
+    forecast_eval_map["GSTAR-ARIMA"] = df_eval_gstar_arima
+
+# LSTM dari folder Prediksi_LSTM
+df_lstm, df_eval_lstm = load_lstm_folder("Prediksi_LSTM")
+
+if df_lstm is not None and df_eval_lstm is not None:
+    forecast_data_map["LSTM"] = df_lstm
+    forecast_eval_map["LSTM"] = df_eval_lstm
 
 # df_gstar_arima = load_forecast_file("historis_plus_forecast_gstar_arima.csv")
 # df_lstm = load_forecast_file("historis_plus_forecast_lstm.csv")
@@ -557,28 +709,79 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
+kabupaten_cols = [
+    col for col in df.columns
+    if col not in ["tahun", "bulan"]
+]
+
 if menu == "Prediksi NDVI":
+    model_options_prediksi = list(forecast_data_map.keys())
+
+    selected_forecast_model = st.sidebar.selectbox(
+        "Model Prediksi",
+        model_options_prediksi,
+        index=0,
+        key="prediksi_model_sidebar"
+    )
+
+    df_year_source = forecast_data_map[selected_forecast_model]
+
     year_options = sorted(
-        [y for y in df["tahun"].unique() if y >= 2025],
+        [int(y) for y in df_year_source["tahun"].dropna().unique()],
         reverse=True
     )
 
-    selected_year = st.sidebar.selectbox(
-        "Tahun Prediksi",
-        year_options
+    # Tahun prediksi otomatis mengikuti data model yang dipilih
+    selected_year = year_options[0]
+
+    st.sidebar.markdown(
+        f"""
+        <div style="
+            background:#ffffff;
+            border:1px solid #e5e7eb;
+            border-radius:10px;
+            padding:10px 12px;
+            margin-bottom:10px;
+            font-size:13px;
+            color:#334155;
+        ">
+            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:4px;">
+                Tahun Hasil Prediksi
+            </div>
+            <div style="font-size:18px;font-weight:800;color:#0f172a;">
+                {selected_year}
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-top:3px;">
+                Otomatis mengikuti model {selected_forecast_model}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
+
+    city_options = [
+        col for col in df_year_source.columns
+        if col not in ["tahun", "bulan"]
+    ]
+
 else:
-    year_options = sorted(df["tahun"].unique(), reverse=True)
+    selected_forecast_model = None
+
+    year_options = sorted(
+        [int(y) for y in df["tahun"].dropna().unique()],
+        reverse=True
+    )
 
     selected_year = st.sidebar.selectbox(
         "Tahun",
         year_options
     )
 
-kabupaten_cols = [col for col in df.columns if col not in ["tahun", "bulan"]]
+    city_options = kabupaten_cols
+
 selected_city = st.sidebar.selectbox(
     "Kabupaten/Kota",
-    ["Semua"] + sorted(kabupaten_cols)
+    ["Semua"] + sorted(city_options)
 )
 
 filtered = df[df["tahun"] == selected_year].copy()
@@ -1468,16 +1671,24 @@ elif menu == "Prediksi NDVI":
     # =========================
     # DROPDOWN MODEL PREDIKSI
     # =========================
-    selected_forecast_model = st.selectbox(
-        "Pilih Model Prediksi",
-        list(forecast_data_map.keys()),
-        index=0,
-        key="prediksi_model"
-    )
 
     df_pred = forecast_data_map[selected_forecast_model]
     df_eval_model = forecast_eval_map[selected_forecast_model]
 
+    pred_kabupaten_cols = [
+        col for col in df_pred.columns
+        if col not in ["tahun", "bulan"]
+    ]
+
+    city_for_pred = selected_city
+
+    if selected_city != "Semua" and selected_city not in pred_kabupaten_cols:
+        st.warning(
+            f"Wilayah {selected_city} tidak tersedia pada data model {selected_forecast_model}. "
+            "Dashboard menampilkan rata-rata seluruh wilayah."
+        )
+        city_for_pred = "Semua"
+        
     filtered_pred = df_pred[df_pred["tahun"] == selected_year].copy()
 
     if filtered_pred.empty:
@@ -1487,12 +1698,12 @@ elif menu == "Prediksi NDVI":
         # =========================
         # METRIK EVALUASI MODEL
         # =========================
-        if selected_city == "Semua":
+        if city_for_pred == "Semua":
             rmse_val = df_eval_model["RMSE"].mean()
             mse_val = df_eval_model["MSE"].mean()
             mae_val = df_eval_model["MAE"].mean()
         else:
-            row_eval = df_eval_model[df_eval_model["Kabupaten/Kota"] == selected_city]
+            row_eval = df_eval_model[df_eval_model["Kabupaten/Kota"] == city_for_pred]
 
             if not row_eval.empty:
                 rmse_val = row_eval["RMSE"].iloc[0]
@@ -1501,34 +1712,65 @@ elif menu == "Prediksi NDVI":
             else:
                 rmse_val, mse_val, mae_val = np.nan, np.nan, np.nan
 
-        if pd.isna(rmse_val):
-            status_prediksi = "Tidak Tersedia"
-        elif rmse_val <= 0.05:
-            status_prediksi = "Sangat Baik"
-        elif rmse_val <= 0.10:
-            status_prediksi = "Baik"
-        elif rmse_val <= 0.15:
-            status_prediksi = "Cukup Baik"
-        else:
-            status_prediksi = "Perlu Evaluasi"
-
         # =========================
         # DATA UNTUK LINE CHART
         # =========================
-        if selected_city == "Semua":
-            y_data = filtered_pred[kabupaten_cols].apply(
+
+        # Data prediksi tahun terpilih, misalnya 2025
+        if city_for_pred == "Semua":
+            y_data = filtered_pred[pred_kabupaten_cols].apply(
                 pd.to_numeric,
                 errors="coerce"
             ).mean(axis=1)
             chart_title = "Rata-rata NDVI Jawa Timur"
         else:
             y_data = pd.to_numeric(
-                filtered_pred[selected_city],
+                filtered_pred[city_for_pred],
                 errors="coerce"
             )
-            chart_title = selected_city
+            chart_title = city_for_pred
 
         y_data = y_data.dropna()
+        y_data = y_data.groupby(y_data.index).mean().sort_index()
+
+
+        # =========================
+        # DATA HISTORIS 2017–SEBELUM TAHUN PREDIKSI
+        # =========================
+        hist_df = df_hist[
+            df_hist["tahun"] < selected_year
+        ].copy()
+
+        hist_value_cols = [
+            col for col in hist_df.columns
+            if col not in ["tahun", "bulan"]
+        ]
+
+        if city_for_pred == "Semua":
+            y_hist = hist_df[hist_value_cols].apply(
+                pd.to_numeric,
+                errors="coerce"
+            ).mean(axis=1)
+
+        else:
+            # Cocokkan nama wilayah dengan lebih fleksibel
+            hist_col_map = {
+                " ".join(str(col).lower().strip().split()): col
+                for col in hist_value_cols
+            }
+
+            city_key = " ".join(str(city_for_pred).lower().strip().split())
+
+            if city_key in hist_col_map:
+                y_hist = pd.to_numeric(
+                    hist_df[hist_col_map[city_key]],
+                    errors="coerce"
+                )
+            else:
+                y_hist = pd.Series(dtype=float)
+
+        y_hist = y_hist.dropna()
+        y_hist = y_hist.groupby(y_hist.index).mean().sort_index()
 
         if y_data.empty:
             st.warning("Tidak ada data NDVI untuk wilayah yang dipilih.")
@@ -1575,9 +1817,9 @@ elif menu == "Prediksi NDVI":
 
             with c3:
                 metric_card(
-                    "Status Prediksi",
-                    status_prediksi,
-                    "Berdasarkan nilai RMSE model"
+                    "Rata-rata NDVI Prediksi",
+                    f"{y_data.mean():.3f}",
+                    f"Berdasarkan model {selected_forecast_model}"
                 )
 
             with c4:
@@ -1613,10 +1855,10 @@ elif menu == "Prediksi NDVI":
             # DATA BAR CHART
             # =========================
             pred_rank = pd.DataFrame({
-                "Kabupaten/Kota": kabupaten_cols,
+                "Kabupaten/Kota": pred_kabupaten_cols,
                 "Rata-rata NDVI Prediksi": [
                     pd.to_numeric(filtered_pred[col], errors="coerce").mean()
-                    for col in kabupaten_cols
+                    for col in pred_kabupaten_cols
                 ]
             })
 
@@ -1630,6 +1872,114 @@ elif menu == "Prediksi NDVI":
             ).head(10)
 
             # =========================
+            # ANALISIS PERGESERAN HISTORIS KE PREDIKSI
+            # =========================
+            hist_compare_start = selected_year - 3
+
+            hist_compare_df = df_hist[
+                (df_hist["tahun"] >= hist_compare_start) &
+                (df_hist["tahun"] < selected_year)
+            ].copy()
+
+            hist_value_cols = [
+                col for col in hist_compare_df.columns
+                if col not in ["tahun", "bulan"]
+            ]
+
+            # Normalisasi nama kolom supaya lebih mudah dicocokkan
+            hist_col_map = {
+                " ".join(str(col).lower().strip().split()): col
+                for col in hist_value_cols
+            }
+
+            def get_hist_col(city_name):
+                city_key = " ".join(str(city_name).lower().strip().split())
+                return hist_col_map.get(city_key, None)
+
+            def kondisi_kelompok(kelas):
+                if kelas in ["Kehijauan Sangat Rendah", "Kehijauan Rendah"]:
+                    return "Rendah"
+                elif kelas in ["Kehijauan Sedang", "Kehijauan Tinggi"]:
+                    return "Baik"
+                else:
+                    return "Tidak Diketahui"
+
+            shift_rows = []
+
+            if city_for_pred == "Semua":
+                shift_cols = pred_kabupaten_cols
+            else:
+                shift_cols = [city_for_pred]
+
+            for kota in shift_cols:
+                hist_col = get_hist_col(kota)
+
+                if hist_col is None or kota not in filtered_pred.columns:
+                    continue
+
+                hist_series = pd.to_numeric(
+                    hist_compare_df[hist_col],
+                    errors="coerce"
+                ).dropna()
+
+                pred_series = pd.to_numeric(
+                    filtered_pred[kota],
+                    errors="coerce"
+                ).dropna()
+
+                if hist_series.empty or pred_series.empty:
+                    continue
+
+                ndvi_hist = hist_series.mean()
+                ndvi_pred = pred_series.mean()
+                perubahan = ndvi_pred - ndvi_hist
+
+                kelas_hist = classify_ndvi(ndvi_hist)
+                kelas_pred = classify_ndvi(ndvi_pred)
+
+                kelompok_hist = kondisi_kelompok(kelas_hist)
+                kelompok_pred = kondisi_kelompok(kelas_pred)
+
+                if kelompok_hist == "Baik" and kelompok_pred == "Rendah":
+                    status_pergeseran = "Waspada Baru"
+                elif kelompok_hist == "Rendah" and kelompok_pred == "Rendah":
+                    status_pergeseran = "Konsisten Prioritas"
+                elif kelompok_hist == "Rendah" and kelompok_pred == "Baik":
+                    status_pergeseran = "Mulai Membaik"
+                elif kelompok_hist == "Baik" and kelompok_pred == "Baik":
+                    status_pergeseran = "Relatif Stabil"
+                else:
+                    status_pergeseran = "Tidak Diketahui"
+
+                shift_rows.append({
+                    "Kabupaten/Kota": kota,
+                    "NDVI Historis": ndvi_hist,
+                    "Kelas Historis": kelas_hist,
+                    "NDVI Prediksi": ndvi_pred,
+                    "Kelas Prediksi": kelas_pred,
+                    "Perubahan NDVI": perubahan,
+                    "Status Pergeseran": status_pergeseran
+                })
+
+            shift_df = pd.DataFrame(shift_rows)
+
+            if not shift_df.empty:
+                status_order = {
+                    "Waspada Baru": 1,
+                    "Konsisten Prioritas": 2,
+                    "Mulai Membaik": 3,
+                    "Relatif Stabil": 4,
+                    "Tidak Diketahui": 5
+                }
+
+                shift_df["Urutan Status"] = shift_df["Status Pergeseran"].map(status_order)
+
+                shift_df = shift_df.sort_values(
+                    ["Urutan Status", "NDVI Prediksi"],
+                    ascending=[True, True]
+                ).reset_index(drop=True)
+                
+            # =========================
             # LINE CHART + BAR CHART
             # =========================
             left_chart, right_chart = st.columns([1.45, 1], gap="medium")
@@ -1638,37 +1988,93 @@ elif menu == "Prediksi NDVI":
                 with st.container(border=True):
                     st.markdown(
                         f"""
-                        <div class="chart-card-title">Pergerakan NDVI: {chart_title}</div>
+                        <div class="chart-card-title">Pergerakan NDVI {selected_forecast_model}: {chart_title}</div>
                         <div class="chart-card-caption">
-                            Menampilkan perubahan nilai NDVI bulanan pada tahun {selected_year}
+                            Menampilkan data NDVI historis 2017–{selected_year - 1} dan hasil prediksi model {selected_forecast_model} pada tahun {selected_year}
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
 
-                    y_min = y_data.min()
-                    y_max = y_data.max()
+                    combined_line = pd.concat([y_hist, y_data])
+
+                    y_min = combined_line.min()
+                    y_max = combined_line.max()
                     buffer = max((y_max - y_min) * 0.25, 0.03)
 
                     y_axis_min = max(0, y_min - buffer)
                     y_axis_max = min(1, y_max + buffer)
 
                     fig_line = go.Figure()
+
+                    # Garis historis
+                    if not y_hist.empty:
+                        fig_line.add_trace(
+                            go.Scatter(
+                                x=y_hist.index,
+                                y=y_hist,
+                                mode="lines",
+                                line=dict(
+                                    width=3,
+                                    color="#64748b"
+                                ),
+                                name="NDVI Historis"
+                            )
+                        )
+
+                    # Garis prediksi
                     fig_line.add_trace(
                         go.Scatter(
                             x=y_data.index,
                             y=y_data,
                             mode="lines+markers",
-                            line=dict(width=3),
-                            marker=dict(size=7),
-                            name="NDVI"
+                            line=dict(
+                                width=3,
+                                color="#16a34a",
+                                dash="dash"
+                            ),
+                            marker=dict(
+                                size=7,
+                                color="#16a34a"
+                            ),
+                            name=f"Prediksi {selected_forecast_model}"
                         )
                     )
 
+                    # Garis penanda awal prediksi
+                    if not y_data.empty:
+                        fig_line.add_vline(
+                            x=y_data.index.min(),
+                            line_width=2,
+                            line_dash="dot",
+                            line_color="#94a3b8"
+                        )
+
+                        fig_line.add_annotation(
+                            x=y_data.index.min(),
+                            y=y_axis_max,
+                            text="Awal prediksi",
+                            showarrow=False,
+                            yshift=12,
+                            font=dict(
+                                size=12,
+                                color="#64748b"
+                            )
+                        )
+
+                    x_start = y_hist.index.min() if not y_hist.empty else y_data.index.min()
+                    x_end = y_data.index.max()
+
                     fig_line.update_layout(
                         height=430,
-                        xaxis_title="Bulan",
+                        xaxis_title="Periode",
                         yaxis_title="Nilai NDVI",
+                        xaxis=dict(
+                            range=[x_start, x_end],
+                            tickformat="%Y",
+                            dtick="M12",
+                            gridcolor="#e5e7eb"
+                        ),
                         yaxis=dict(
                             range=[y_axis_min, y_axis_max],
                             tickformat=".3f",
@@ -1678,7 +2084,14 @@ elif menu == "Prediksi NDVI":
                         hovermode="x unified",
                         margin=dict(l=75, r=20, t=10, b=45),
                         paper_bgcolor="#ffffff",
-                        plot_bgcolor="#ffffff"
+                        plot_bgcolor="#ffffff",
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        )
                     )
 
                     st.plotly_chart(
@@ -1749,27 +2162,112 @@ elif menu == "Prediksi NDVI":
                     )
 
             # =========================
-            # INTERPRETASI
+            # ANALISIS PERGESERAN HISTORIS KE PREDIKSI
             # =========================
-            kondisi = classify_ndvi(y_data.mean())
+            if not shift_df.empty:
+                jumlah_waspada_baru = (shift_df["Status Pergeseran"] == "Waspada Baru").sum()
+                jumlah_konsisten = (shift_df["Status Pergeseran"] == "Konsisten Prioritas").sum()
+                jumlah_membaik = (shift_df["Status Pergeseran"] == "Mulai Membaik").sum()
+                jumlah_stabil = (shift_df["Status Pergeseran"] == "Relatif Stabil").sum()
 
-            st.markdown(
-                f"""
-                <div class="section-card">
-                    Rata-rata NDVI prediksi pada tahun {selected_year} berada pada kategori 
-                    <span style="color:{class_color(kondisi)};font-weight:800;">{kondisi}</span>. 
-                    Kondisi ini menunjukkan perlunya pemantauan lebih lanjut terhadap wilayah dengan nilai NDVI rendah. 
-                    Arah tren NDVI menunjukkan kondisi <b>{trend_status.lower()}</b> 
-                    dengan perubahan sebesar <b>{delta_ndvi:+.3f}</b>.
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+                shift_show = shift_df.head(10).copy()
+
+                for col in ["NDVI Historis", "NDVI Prediksi", "Perubahan NDVI"]:
+                    shift_show[col] = shift_show[col].round(3)
+
+                st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+
+                with st.container(border=True):
+                    st.markdown(
+                        f"""
+                        <div class="chart-card-title">Analisis Pergeseran Kondisi Historis ke Prediksi</div>
+                        <div class="chart-card-caption">
+                            Membandingkan rata-rata NDVI historis {hist_compare_start}–{selected_year - 1}
+                            dengan hasil prediksi model {selected_forecast_model} tahun {selected_year}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    s1, s2, s3, s4 = st.columns(4, gap="medium")
+
+                    with s1:
+                        metric_card(
+                            "Waspada Baru",
+                            jumlah_waspada_baru,
+                            "Historis baik, prediksi menurun"
+                        )
+
+                    with s2:
+                        metric_card(
+                            "Konsisten Prioritas",
+                            jumlah_konsisten,
+                            "Historis rendah, prediksi tetap rendah"
+                        )
+
+                    with s3:
+                        metric_card(
+                            "Mulai Membaik",
+                            jumlah_membaik,
+                            "Historis rendah, prediksi membaik"
+                        )
+
+                    with s4:
+                        metric_card(
+                            "Relatif Stabil",
+                            jumlah_stabil,
+                            "Historis dan prediksi relatif baik"
+                        )
+
+                    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background:#f8fafc;
+                            border-left:5px solid #2E7D32;
+                            border-radius:12px;
+                            padding:13px 16px;
+                            margin-bottom:12px;
+                            color:#334155;
+                            font-size:15px;
+                            line-height:1.65;
+                        ">
+                            Bagian ini menunjukkan apakah suatu wilayah mengalami perubahan kondisi dari pola historis
+                            menuju hasil prediksi. Wilayah <b>Waspada Baru</b> perlu diperhatikan karena sebelumnya
+                            memiliki NDVI relatif baik, tetapi diprediksi masuk kategori rendah. Wilayah
+                            <b>Konsisten Prioritas</b> menunjukkan kondisi rendah secara historis dan tetap rendah
+                            pada hasil prediksi.
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    st.dataframe(
+                        shift_show[
+                            [
+                                "Kabupaten/Kota",
+                                "NDVI Historis",
+                                "Kelas Historis",
+                                "NDVI Prediksi",
+                                "Kelas Prediksi",
+                                "Perubahan NDVI",
+                                "Status Pergeseran"
+                            ]
+                        ],
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+            else:
+                st.info(
+                    "Data historis belum dapat dicocokkan dengan data prediksi untuk analisis pergeseran."
+                )
 
             # =========================
             # DETAIL EVALUASI MODEL
             # =========================
-            with st.expander("Lihat Detail Evaluasi Model"):
+            with st.expander(f"Lihat Detail Evaluasi Model {selected_forecast_model}"):
                 eval_detail_df = pd.DataFrame({
                     "Metrik": ["RMSE", "MSE", "MAE"],
                     "Nilai": [
@@ -1793,16 +2291,16 @@ elif menu == "Prediksi NDVI":
             # =========================
             # DETAIL FORECAST BULANAN
             # =========================
-            if selected_city == "Semua":
-                detail_df = filtered_pred[kabupaten_cols].copy()
+            if city_for_pred == "Semua":
+                detail_df = filtered_pred[pred_kabupaten_cols].copy()
             else:
-                detail_df = filtered_pred[[selected_city]].copy()
+                detail_df = filtered_pred[[city_for_pred]].copy()
 
             detail_df = detail_df.reset_index()
             detail_df = detail_df.rename(columns={detail_df.columns[0]: "Tanggal"})
             detail_df["Tanggal"] = pd.to_datetime(detail_df["Tanggal"]).dt.strftime("%B %Y")
 
-            with st.expander("Lihat Detail Forecast Bulanan"):
+            with st.expander("Lihat Detail Nilai Prediksi Bulanan"):
                 st.dataframe(
                     detail_df,
                     use_container_width=True,
