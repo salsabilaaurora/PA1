@@ -855,7 +855,7 @@ if menu == "Beranda":
     CARD_HEIGHT = 530
     CHART_HEIGHT = 410
 
-    left, middle, insight_col = st.columns(3, gap="medium")
+    left, middle, factor_col = st.columns(3, gap="medium")
 
     with left:
         with st.container(border=True, height=CARD_HEIGHT):
@@ -995,13 +995,13 @@ if menu == "Beranda":
                 key="bar_ndvi_terendah"
             )
 
-    with insight_col:
+    with factor_col:
         with st.container(border=True, height=CARD_HEIGHT):
             st.markdown(
-                f"""
-                <div class="chart-card-title">Catatan Interpretasi</div>
+                """
+                <div class="chart-card-title">Faktor yang Berkaitan dengan NDVI</div>
                 <div class="chart-card-caption">
-                    Panduan membaca dashboard indikasi risiko kekeringan berbasis NDVI tahun {selected_year}
+                    Ringkasan hasil analisis faktor untuk mengetahui kelompok variabel yang berkaitan dengan variasi nilai NDVI
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -1019,117 +1019,244 @@ if menu == "Beranda":
                 ">
 
                     <div style="
-                        background:#f8fafc;
-                        border:1px solid #dbe2ea;
-                        border-radius:14px;
-                        padding:14px 15px;
+                        display:grid;
+                        grid-template-columns:1fr 1fr;
+                        gap:10px;
                         margin-bottom:12px;
                     ">
                         <div style="
-                            font-size:12px;
-                            color:#334155;
-                            font-weight:700;
-                            margin-bottom:6px;
+                            background:#ecfdf5;
+                            border:1px solid #bbf7d0;
+                            border-radius:14px;
+                            padding:12px 14px;
                         ">
-                            About Dashboard?
+                            <div style="font-size:12px;color:#166534;font-weight:700;margin-bottom:6px;">
+                                Faktor Utama
+                            </div>
+                            <div style="font-size:26px;font-weight:850;color:#14532d;">
+                                5
+                            </div>
+                            <div style="font-size:12px;color:#166534;margin-top:4px;">
+                                Hasil EFA
+                            </div>
                         </div>
 
                         <div style="
-                            font-size:14px;
-                            line-height:1.65;
-                            color:#334155;
-                            font-weight:400;
+                            background:#eff6ff;
+                            border:1px solid #bfdbfe;
+                            border-radius:14px;
+                            padding:12px 14px;
                         ">
-                            Dashboard ini menyajikan pemantauan kondisi vegetasi wilayah Jawa Timur
-                            berdasarkan nilai NDVI. Nilai NDVI digunakan sebagai indikator tidak langsung
-                            untuk mengidentifikasi wilayah yang berpotensi memerlukan perhatian lebih
-                            terhadap indikasi risiko kekeringan.
+                            <div style="font-size:12px;color:#1d4ed8;font-weight:700;margin-bottom:6px;">
+                                Model Terbaik
+                            </div>
+                            <div style="font-size:20px;font-weight:850;color:#1e3a8a;">
+                                RF
+                            </div>
+                            <div style="font-size:12px;color:#1e40af;margin-top:4px;">
+                                R² = 0.7078
+                            </div>
                         </div>
                     </div>
 
                     <div style="
-                        background:#eff6ff;
-                        border:1px solid #bfdbfe;
+                        background:#ffffff;
+                        border:1px solid #e5e7eb;
+                        border-left:6px solid #2E7D32;
                         border-radius:14px;
-                        padding:14px 15px;
-                        margin-bottom:12px;
+                        padding:13px 15px;
+                        margin-bottom:10px;
                     ">
-                        <div style="
-                            font-size:12px;
-                            color:#1d4ed8;
-                            font-weight:700;
-                            margin-bottom:6px;
-                        ">
-                            Home Page
+                        <div style="font-size:13px;color:#64748b;font-weight:700;margin-bottom:5px;">
+                            Faktor 1
                         </div>
-
-                        <div style="
-                            font-size:14px;
-                            line-height:1.65;
-                            color:#1e3a8a;
-                            font-weight:400;
-                        ">
-                            Donut chart menunjukkan komposisi kelas risiko. Bar chart menunjukkan wilayah
-                            dengan NDVI terendah. Treemap memperlihatkan skala prioritas pemantauan antarwilayah.
-                            Semakin rendah NDVI, semakin tinggi prioritas pemantauan.
+                        <div style="font-size:16px;color:#0f172a;font-weight:800;margin-bottom:4px;">
+                            Kondisi Iklim Kering-Basah
+                        </div>
+                        <div style="font-size:13px;color:#475569;line-height:1.55;">
+                            Variabel dominan: <b>RH_AVG, SS, RR</b>
                         </div>
                     </div>
 
                     <div style="
-                        background:#fff7ed;
-                        border:1px solid #fed7aa;
+                        background:#ffffff;
+                        border:1px solid #e5e7eb;
+                        border-left:6px solid #B7791F;
                         border-radius:14px;
-                        padding:14px 15px;
-                        margin-bottom:12px;
+                        padding:13px 15px;
+                        margin-bottom:10px;
                     ">
-                        <div style="
-                            font-size:12px;
-                            color:#9a3412;
-                            font-weight:700;
-                            margin-bottom:6px;
-                        ">
-                            Hal yang Perlu Dipahami
+                        <div style="font-size:13px;color:#64748b;font-weight:700;margin-bottom:5px;">
+                            Faktor 2
                         </div>
-
-                        <div style="
-                            font-size:14px;
-                            line-height:1.65;
-                            color:#7c2d12;
-                            font-weight:400;
-                        ">
-                            Kategori risiko pada dashboard ini bersifat indikatif. Artinya, wilayah dengan
-                            risiko tinggi tidak langsung berarti pasti mengalami kekeringan, tetapi menunjukkan
-                            kondisi vegetasi yang perlu diperhatikan lebih lanjut.
+                        <div style="font-size:16px;color:#0f172a;font-weight:800;margin-bottom:4px;">
+                            Kecepatan Angin
+                        </div>
+                        <div style="font-size:13px;color:#475569;line-height:1.55;">
+                            Variabel dominan: <b>FF_X, FF_AVG</b>
                         </div>
                     </div>
 
                     <div style="
-                        background:#ecfdf5;
-                        border:1px solid #bbf7d0;
+                        background:#ffffff;
+                        border:1px solid #e5e7eb;
+                        border-left:6px solid #D9C75F;
                         border-radius:14px;
-                        padding:14px 15px;
+                        padding:13px 15px;
+                        margin-bottom:10px;
                     ">
-                        <div style="
-                            font-size:12px;
-                            color:#166534;
-                            font-weight:700;
-                            margin-bottom:6px;
-                        ">
-                            Rekomendasi Pemanfaatan
+                        <div style="font-size:13px;color:#64748b;font-weight:700;margin-bottom:5px;">
+                            Faktor 3
                         </div>
-
-                        <div style="
-                            font-size:14px;
-                            line-height:1.65;
-                            color:#14532d;
-                            font-weight:400;
-                        ">
-                            Hasil dashboard dapat digunakan sebagai dasar awal untuk menentukan wilayah
-                            prioritas pemantauan. Interpretasi sebaiknya tetap dibandingkan dengan data
-                            pendukung seperti curah hujan, kelembapan, irigasi, dan kondisi lapangan.
+                        <div style="font-size:16px;color:#0f172a;font-weight:800;margin-bottom:4px;">
+                            Temperatur Udara
+                        </div>
+                        <div style="font-size:13px;color:#475569;line-height:1.55;">
+                            Variabel dominan: <b>TN, TX</b>
                         </div>
                     </div>
 
+                    <div style="
+                        background:#ffffff;
+                        border:1px solid #e5e7eb;
+                        border-left:6px solid #2563eb;
+                        border-radius:14px;
+                        padding:13px 15px;
+                        margin-bottom:10px;
+                    ">
+                        <div style="font-size:13px;color:#64748b;font-weight:700;margin-bottom:5px;">
+                            Faktor 4
+                        </div>
+                        <div style="font-size:16px;color:#0f172a;font-weight:800;margin-bottom:4px;">
+                            Penggunaan Lahan dan Kependudukan
+                        </div>
+                        <div style="font-size:13px;color:#475569;line-height:1.55;">
+                            Variabel dominan: <b>irigasi, luas_hutan, pddk_laki</b>
+                        </div>
+                    </div>
+
+                    <div style="
+                        background:#ffffff;
+                        border:1px solid #e5e7eb;
+                        border-left:6px solid #64748b;
+                        border-radius:14px;
+                        padding:13px 15px;
+                    ">
+                        <div style="font-size:13px;color:#64748b;font-weight:700;margin-bottom:5px;">
+                            Faktor 5
+                        </div>
+                        <div style="font-size:16px;color:#0f172a;font-weight:800;margin-bottom:4px;">
+                            Arah Angin dan Temporal
+                        </div>
+                        <div style="font-size:13px;color:#475569;line-height:1.55;">
+                            Variabel dominan: <b>DDD_cos, Is_Calm, tahun</b>
+                        </div>
+                    </div>
+
+                </div>
+                """
+            )
+
+    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div class="chart-card-title">Catatan Interpretasi</div>
+            <div class="chart-card-caption">
+                Panduan membaca dashboard indikasi risiko kekeringan berbasis NDVI tahun {selected_year}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        note1, note2, note3, note4 = st.columns(4, gap="medium")
+
+        with note1:
+            st.html(
+                """
+                <div style="
+                    background:#f8fafc;
+                    border:1px solid #dbe2ea;
+                    border-radius:14px;
+                    padding:14px 15px;
+                    min-height:135px;
+                ">
+                    <div style="font-size:12px;color:#334155;font-weight:800;margin-bottom:6px;">
+                        About Dashboard?
+                    </div>
+                    <div style="font-size:14px;line-height:1.6;color:#334155;">
+                        Dashboard ini menyajikan pemantauan kondisi vegetasi wilayah Jawa Timur
+                        berdasarkan nilai NDVI. Nilai NDVI digunakan sebagai indikator tidak langsung
+                        untuk mengidentifikasi wilayah yang berpotensi memerlukan perhatian lebih
+                        terhadap indikasi risiko kekeringan
+                    </div>
+                </div>
+                """
+            )
+
+        with note2:
+            st.html(
+                """
+                <div style="
+                    background:#eff6ff;
+                    border:1px solid #bfdbfe;
+                    border-radius:14px;
+                    padding:14px 15px;
+                    min-height:135px;
+                ">
+                    <div style="font-size:12px;color:#1d4ed8;font-weight:800;margin-bottom:6px;">
+                        Home Page
+                    </div>
+                    <div style="font-size:14px;line-height:1.6;color:#1e3a8a;">
+                        Donut chart menunjukkan komposisi kelas risiko. Bar chart menunjukkan wilayah
+                        dengan NDVI terendah. Treemap memperlihatkan skala prioritas pemantauan antarwilayah.
+                        Semakin rendah NDVI, semakin tinggi prioritas pemantauan
+                    </div>
+                </div>
+                """
+            )
+
+        with note3:
+            st.html(
+                """
+                <div style="
+                    background:#fff7ed;
+                    border:1px solid #fed7aa;
+                    border-radius:14px;
+                    padding:14px 15px;
+                    min-height:135px;
+                ">
+                    <div style="font-size:12px;color:#9a3412;font-weight:800;margin-bottom:6px;">
+                        Hal yang Perlu Dipahami
+                    </div>
+                    <div style="font-size:14px;line-height:1.6;color:#7c2d12;">
+                        Kategori risiko pada dashboard ini bersifat indikatif. Artinya, wilayah dengan
+                        risiko tinggi tidak langsung berarti pasti mengalami kekeringan, tetapi menunjukkan
+                        kondisi vegetasi yang perlu diperhatikan lebih lanjut
+                    </div>
+                </div>
+                """
+            )
+
+        with note4:
+            st.html(
+                """
+                <div style="
+                    background:#ecfdf5;
+                    border:1px solid #bbf7d0;
+                    border-radius:14px;
+                    padding:14px 15px;
+                    min-height:135px;
+                ">
+                    <div style="font-size:12px;color:#166534;font-weight:800;margin-bottom:6px;">
+                        Rekomendasi Pemanfaatan
+                    </div>
+                    <div style="font-size:14px;line-height:1.6;color:#14532d;">
+                        Hasil dashboard dapat digunakan sebagai dasar awal untuk menentukan wilayah
+                        prioritas pemantauan. Interpretasi sebaiknya tetap dibandingkan dengan data
+                        pendukung seperti curah hujan, kelembapan, irigasi, dan kondisi lapangan
+                    </div>
                 </div>
                 """
             )
@@ -1772,41 +1899,126 @@ elif menu == "Klasifikasi Indikasi Risiko":
         status_model = "Model Pembanding"
         status_help = f"Model terbaik: {best_model_name}"
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        small_metric_card(
-            "Accuracy",
-            f"{accuracy_selected:.2%}",
-            "Proporsi klasifikasi benar"
+        metric_card(
+            "Model Digunakan",
+            selected_algorithm,
+            "Algoritma klasifikasi yang dipilih"
         )
 
     with c2:
-        small_metric_card(
-            "F1-Macro",
-            f"{f1_macro_selected:.2%}",
-            "Metrik utama pemilihan model"
+        metric_card(
+            "Ketepatan Prediksi",
+            f"{accuracy_selected:.2%}",
+            "Gambaran umum prediksi yang benar"
         )
 
     with c3:
-        small_metric_card(
-            "Status Model",
-            status_model,
-            f"{status_help} | F1-Macro: {f1_macro_selected:.2%}"
+        metric_card(
+            "Keseimbangan Klasifikasi",
+            f"{f1_macro_selected:.2%}",
+            "Acuan utama pemilihan model"
         )
 
-    with st.expander("Lihat Perbandingan Seluruh Model"):
+    with c4:
+        metric_card(
+            "Skenario Model",
+            selected_approach,
+            "Pendekatan yang digunakan"
+        )
+    
+    st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
+
+    with st.expander("Lihat Perbandingan Performa Model"):
+        st.markdown(
+            f"""
+            <div class="section-card">
+                Model terbaik pada penelitian ini adalah <b>{best_model_name}</b> karena memiliki nilai
+                <b>F1-Macro tertinggi</b>, sehingga lebih seimbang dalam mengenali seluruh kelas risiko.
+                Akurasi tetap ditampilkan sebagai gambaran umum ketepatan prediksi model.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         detail_all_df = model_eval_df.copy()
 
         for col in ["Accuracy", "Precision Weighted", "Recall Weighted", "F1-Macro", "F1-Weighted"]:
             detail_all_df[col] = detail_all_df[col].apply(lambda x: f"{x:.2%}")
 
-        st.dataframe(
-            detail_all_df[
-                ["Model", "Accuracy", "Precision Weighted", "Recall Weighted", "F1-Macro", "F1-Weighted"]
-            ],
-            use_container_width=True,
-            hide_index=True
+        model_rows_html = ""
+
+        for _, row in detail_all_df.iterrows():
+            is_best = row["Model"] == best_model_name
+
+            row_bg = "#f8fafc" if is_best else "#ffffff"
+            row_weight = "700" if is_best else "600"
+
+            model_rows_html += f"""
+            <tr style="background:{row_bg};">
+                <td>{html.escape(str(row["Model"]))}</td>
+                <td>{row["Accuracy"]}</td>
+                <td>{row["Precision Weighted"]}</td>
+                <td>{row["Recall Weighted"]}</td>
+                <td>{row["F1-Macro"]}</td>
+                <td>{row["F1-Weighted"]}</td>
+            </tr>
+            """
+
+        st.html(
+            f"""
+            <div style="
+                border:1px solid #dbe2ea;
+                border-radius:10px;
+                overflow:hidden;
+                background:#ffffff;
+                margin-top:14px;
+            ">
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    color:#0f172a;
+                ">
+                    <thead>
+                        <tr style="background:#f1f5f9;">
+                            <th>Model</th>
+                            <th>Ketepatan Prediksi</th>
+                            <th>Precision Weighted</th>
+                            <th>Recall Weighted</th>
+                            <th>F1-Macro</th>
+                            <th>F1-Weighted</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {model_rows_html}
+                    </tbody>
+                </table>
+            </div>
+
+            <style>
+                thead th {{
+                    text-align:left;
+                    padding:12px;
+                    border-bottom:1px solid #cbd5e1;
+                    font-size:16px;
+                    font-weight:700;
+                    color:#0f172a;
+                    white-space:nowrap;
+                }}
+
+                tbody td {{
+                    padding:10px 12px;
+                    border-bottom:1px solid #e5e7eb;
+                    font-size:16px;
+                    font-weight:500;
+                    line-height:1.45;
+                    color:#0f172a;
+                }}
+            </style>
+            """
         )
 
     # =========================
@@ -1852,13 +2064,29 @@ elif menu == "Klasifikasi Indikasi Risiko":
         else:
 
             # =========================
-            # PETA SEBARAN RISIKO
+            # DATA PETA DAN RINGKASAN HASIL KLASIFIKASI
             # =========================
-            st.markdown("#### Peta Sebaran Klasifikasi Indikasi Risiko Kekeringan Berbasis NDVI")
+
+            # Tahun 2022 menggunakan hasil klasifikasi model.
+            # Tahun selain 2022 menggunakan kelas NDVI yang sudah dibentuk dari nilai NDVI.
+            if selected_year == 2022:
+                sumber_kelas_col = "pred_num"
+                judul_peta = "Peta Sebaran Hasil Klasifikasi Model Tahun 2022"
+                caption_peta = (
+                    "Menampilkan sebaran indikasi risiko kekeringan berdasarkan hasil klasifikasi model pada tahun 2022"
+                )
+                label_kelas_peta = "Hasil Klasifikasi Model"
+            else:
+                sumber_kelas_col = "kelas_ndvi_num"
+                judul_peta = "Peta Sebaran Kelas NDVI sebagai Indikasi Risiko Kekeringan"
+                caption_peta = (
+                    "Menampilkan sebaran kelas NDVI tiap kabupaten/kota yang digunakan sebagai indikator tidak langsung terhadap indikasi risiko kekeringan"
+                )
+                label_kelas_peta = "Kelas NDVI"
 
             map_df = eval_cls.copy()
-            map_df["kelas_prediksi"] = map_df["pred_num"].apply(risk_label)
-            map_df["risiko_prediksi"] = map_df["kelas_prediksi"].apply(risk_level)
+            map_df["kelas_peta"] = map_df[sumber_kelas_col].apply(risk_label)
+            map_df["risiko_peta"] = map_df["kelas_peta"].apply(risk_level)
 
             def mode_value(series):
                 mode_result = series.dropna().mode()
@@ -1871,9 +2099,27 @@ elif menu == "Klasifikasi Indikasi Risiko":
                 .groupby("Kabupaten/Kota", as_index=False)
                 .agg({
                     "NDVI": "mean",
-                    "kelas_prediksi": mode_value,
-                    "risiko_prediksi": mode_value
+                    "kelas_peta": mode_value,
+                    "risiko_peta": mode_value
                 })
+            )
+
+            map_summary["risiko_label"] = (
+                map_summary["risiko_peta"]
+                .str.replace("Indikasi Risiko ", "", regex=False)
+            )
+
+            # =========================
+            # PETA SEBARAN RISIKO
+            # =========================
+            st.markdown(
+                f"""
+                <div class="chart-card-title">{judul_peta}</div>
+                <div class="chart-card-caption">
+                    {caption_peta}
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
             def normalize_area_name(x):
@@ -1916,7 +2162,6 @@ elif menu == "Klasifikasi Indikasi Risiko":
 
                     return nama
 
-
                 map_summary["wilayah_key"] = map_summary["Kabupaten/Kota"].apply(normalize_area_name)
 
                 for feature in jatim_geojson["features"]:
@@ -1940,20 +2185,28 @@ elif menu == "Klasifikasi Indikasi Risiko":
                     geojson=jatim_geojson,
                     locations="wilayah_key",
                     featureidkey="properties.wilayah_key",
-                    color="kelas_prediksi",
+                    color="risiko_label",
+                    category_orders={
+                        "risiko_label": ["Sangat Tinggi", "Tinggi", "Sedang", "Rendah"]
+                    },
                     color_discrete_map={
-                        "Kehijauan Sangat Rendah": "#6B3F16",
-                        "Kehijauan Rendah": "#B7791F",
-                        "Kehijauan Sedang": "#D9C75F",
-                        "Kehijauan Tinggi": "#2E7D32",
+                        "Rendah": "#2E7D32",
+                        "Sedang": "#D9C75F",
+                        "Tinggi": "#B7791F",
+                        "Sangat Tinggi": "#6B3F16",
                         "Tidak Diketahui": "#94A3B8"
                     },
                     hover_name="Kabupaten/Kota",
                     hover_data={
                         "NDVI": ":.3f",
-                        "kelas_prediksi": True,
-                        "risiko_prediksi": True,
+                        "kelas_peta": True,
+                        "risiko_label": True,
                         "wilayah_key": False
+                    },
+                    labels={
+                        "NDVI": "Rata-rata NDVI",
+                        "kelas_peta": label_kelas_peta,
+                        "risiko_label": "Indikasi Risiko Kekeringan"
                     },
                     mapbox_style="carto-positron",
                     center={"lat": -7.54, "lon": 112.23},
@@ -1966,7 +2219,7 @@ elif menu == "Klasifikasi Indikasi Risiko":
                     margin=dict(l=0, r=0, t=0, b=0),
                     paper_bgcolor="#ffffff",
                     plot_bgcolor="#ffffff",
-                    legend_title_text="Kelas Prediksi"
+                    legend_title_text="Indikasi Risiko Kekeringan"
                 )
 
                 st.plotly_chart(
@@ -1983,106 +2236,320 @@ elif menu == "Klasifikasi Indikasi Risiko":
                 )
 
             # =========================
-            # CONFUSION MATRIX
+            # DETAIL DISTRIBUSI BULANAN HASIL KLASIFIKASI
             # =========================
-            with st.expander("Lihat Confusion Matrix"):
-                y_true = eval_cls["kelas_ndvi_num"]
-                y_pred = eval_cls["pred_num"]
+            st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
 
-                label_num = [0, 1, 2, 3]
-                label_text = [risk_label(x) for x in label_num]
+            with st.container(border=True):
+                if selected_year == 2022:
+                    judul_distribusi = "Detail Distribusi Bulanan Hasil Klasifikasi Model"
+                    caption_distribusi = (
+                        "Menampilkan ringkasan dan jumlah kabupaten/kota pada setiap kategori indikasi risiko kekeringan "
+                        "berdasarkan hasil klasifikasi model pada bulan yang dipilih"
+                    )
+                else:
+                    judul_distribusi = "Detail Distribusi Bulanan Kelas NDVI sebagai Indikasi Risiko"
+                    caption_distribusi = (
+                        "Menampilkan ringkasan dan jumlah kabupaten/kota pada setiap kategori kelas NDVI "
+                        "sebagai indikator tidak langsung terhadap indikasi risiko kekeringan pada bulan yang dipilih"
+                    )
 
-                cm = confusion_matrix(
-                    y_true,
-                    y_pred,
-                    labels=label_num
+                st.markdown(
+                    f"""
+                    <div class="chart-card-title">{judul_distribusi}</div>
+                    """,
+                    unsafe_allow_html=True
                 )
 
-                fig_cm = px.imshow(
-                    cm,
-                    text_auto=True,
-                    x=label_text,
-                    y=label_text,
-                    color_continuous_scale="YlOrBr",
-                    aspect="auto"
-                )
+                # =========================
+                # DATA DISTRIBUSI TAHUNAN PER BULAN
+                # =========================
+                month_name_map = {
+                    1: "Jan",
+                    2: "Feb",
+                    3: "Mar",
+                    4: "Apr",
+                    5: "Mei",
+                    6: "Jun",
+                    7: "Jul",
+                    8: "Agu",
+                    9: "Sep",
+                    10: "Okt",
+                    11: "Nov",
+                    12: "Des"
+                }
 
-                fig_cm.update_layout(
-                    height=420,
-                    xaxis_title="Prediksi",
-                    yaxis_title="Aktual",
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    paper_bgcolor="#ffffff",
-                    plot_bgcolor="#ffffff"
-                )
+                dist_df = eval_cls.copy()
 
-                st.plotly_chart(
-                    fig_cm,
-                    use_container_width=True,
-                    theme=None,
-                    config={"displayModeBar": False}
-                )
-
-            # =========================
-            # DETAIL KLASIFIKASI
-            # =========================
-            show_cols = [
-                "Kabupaten/Kota",
-                "bulan",
-                "tahun",
-                "NDVI",
-                "RR",
-                "RH_AVG",
-                "TAVG",
-                "kelas_ndvi",
-                "Prediksi_Risiko_Model"
-            ]
-
-            available_cols = [
-                col for col in show_cols
-                if col in filtered_cls.columns
-            ]
-
-            detail_cls = filtered_cls[available_cols].copy()
-
-            if "kelas_ndvi" in detail_cls.columns:
-                detail_cls["kelas_ndvi"] = pd.to_numeric(
-                    detail_cls["kelas_ndvi"],
+                dist_df["bulan"] = pd.to_numeric(
+                    dist_df["bulan"],
                     errors="coerce"
+                ).astype(int)
+
+                # Tahun 2022 memakai prediksi model, tahun selain 2022 memakai kelas NDVI
+                if selected_year == 2022:
+                    dist_df["kelas_distribusi"] = dist_df["pred_num"].apply(risk_label)
+                else:
+                    dist_df["kelas_distribusi"] = dist_df["kelas_ndvi_num"].apply(risk_label)
+
+                dist_df["risiko_distribusi"] = dist_df["kelas_distribusi"].apply(risk_level)
+
+                dist_df["risiko_label"] = (
+                    dist_df["risiko_distribusi"]
+                    .str.replace("Indikasi Risiko ", "", regex=False)
                 )
 
-                detail_cls["kelas_aktual"] = detail_cls["kelas_ndvi"].apply(
-                    lambda x: risk_label(x) if pd.notna(x) else "Tidak Diketahui"
+                dist_df["Bulan"] = dist_df["bulan"].map(month_name_map)
+
+                risk_order = ["Sangat Tinggi", "Tinggi", "Sedang", "Rendah"]
+
+                risk_color_map = {
+                    "Sangat Tinggi": "#6B3F16",
+                    "Tinggi": "#B7791F",
+                    "Sedang": "#D9C75F",
+                    "Rendah": "#2E7D32"
+                }
+
+                # Rekap jumlah wilayah per bulan dan per kategori risiko
+                distribusi_bulanan = (
+                    dist_df
+                    .groupby(["bulan", "Bulan", "risiko_label"])["Kabupaten/Kota"]
+                    .nunique()
+                    .reset_index(name="Jumlah Wilayah")
                 )
 
-            if "Prediksi_Risiko_Model" in detail_cls.columns:
-                detail_cls["Prediksi_Risiko_Model"] = pd.to_numeric(
-                    detail_cls["Prediksi_Risiko_Model"],
+                # Lengkapi agar setiap bulan tetap punya 4 kategori bar
+                bulan_tersedia = sorted(distribusi_bulanan["bulan"].dropna().unique())
+
+                full_index = pd.MultiIndex.from_product(
+                    [bulan_tersedia, risk_order],
+                    names=["bulan", "risiko_label"]
+                )
+
+                distribusi_bulanan = (
+                    distribusi_bulanan
+                    .set_index(["bulan", "risiko_label"])
+                    .reindex(full_index, fill_value=0)
+                    .reset_index()
+                )
+
+                distribusi_bulanan["Bulan"] = distribusi_bulanan["bulan"].map(month_name_map)
+
+                # =========================
+                # RINGKASAN TAHUNAN
+                # =========================
+                total_wilayah_tahun = dist_df["Kabupaten/Kota"].nunique()
+
+                risiko_dominan_tahun = (
+                    dist_df["risiko_label"]
+                    .value_counts()
+                    .idxmax()
+                )
+
+                wilayah_prioritas_tahun = (
+                    dist_df
+                    .groupby("Kabupaten/Kota", as_index=False)["NDVI"]
+                    .mean()
+                    .sort_values("NDVI", ascending=True)
+                    .iloc[0]["Kabupaten/Kota"]
+                )
+
+                ndvi_prioritas_tahun = (
+                    dist_df
+                    .groupby("Kabupaten/Kota", as_index=False)["NDVI"]
+                    .mean()
+                    .sort_values("NDVI", ascending=True)
+                    .iloc[0]["NDVI"]
+                )
+
+                jumlah_sangat_tinggi_tahun = (
+                    dist_df["risiko_label"] == "Sangat Tinggi"
+                ).sum()
+
+                jumlah_tinggi_tahun = (
+                    dist_df["risiko_label"] == "Tinggi"
+                ).sum()
+
+                ringkasan_col, chart_col = st.columns([0.95, 1.55], gap="large")
+
+                with ringkasan_col:
+                    st.html(
+                        f"""
+                        <div style="
+                            background:#ffffff;
+                            border-radius:18px;
+                            border-left:8px solid #2E7D32;
+                            padding:20px 24px;
+                            min-height:390px;
+                            box-shadow:0 4px 18px rgba(15,23,42,0.05);
+                            border-top:1px solid #e5e7eb;
+                            border-right:1px solid #e5e7eb;
+                            border-bottom:1px solid #e5e7eb;
+                        ">
+                            <div style="
+                                font-size:22px;
+                                font-weight:800;
+                                color:#0f172a;
+                                margin-bottom:6px;
+                            ">
+                                Ringkasan Tahun {selected_year}
+                            </div>
+
+                            <div style="
+                                font-size:16px;
+                                color:#64748b;
+                                font-weight:500;
+                                margin-bottom:14px;
+                            ">
+                                Hasil distribusi indikasi risiko kekeringan per bulan
+                            </div>
+
+                            <div style="
+                                height:1px;
+                                background:#e5e7eb;
+                                margin:12px 0 14px 0;
+                            "></div>
+
+                            <div style="
+                                font-size:20px;
+                                line-height:1.85;
+                                color:#334155;
+                                font-weight:400;
+                            ">
+                                Pada tahun
+                                <span style="color:#2563eb; font-weight:800;">{selected_year}</span>,
+                                visualisasi menampilkan distribusi risiko pada
+                                <span style="color:#2563eb; font-weight:800;">{total_wilayah_tahun}</span>
+                                kabupaten/kota untuk setiap bulan.
+
+                                Kategori indikasi risiko yang paling sering muncul adalah
+                                <span style="color:#ca8a04; font-weight:800;">{risiko_dominan_tahun}</span>.
+
+                                Wilayah dengan rata-rata NDVI terendah sepanjang tahun adalah
+                                <span style="color:#dc2626; font-weight:800;">{html.escape(str(wilayah_prioritas_tahun))}</span>
+                                dengan nilai NDVI
+                                <span style="color:#2563eb; font-weight:800;">{ndvi_prioritas_tahun:.3f}</span>.
+
+                                Secara akumulatif, terdapat
+                                <span style="color:#7c2d12; font-weight:800;">{jumlah_sangat_tinggi_tahun}</span>
+                                kemunculan wilayah-bulan pada kategori risiko sangat tinggi dan
+                                <span style="color:#b45309; font-weight:800;">{jumlah_tinggi_tahun}</span>
+                                pada kategori risiko tinggi.
+                            </div>
+                        </div>
+                        """
+                    )
+
+                with chart_col:
+                    fig_dist_cls = go.Figure()
+
+                    for risiko in risk_order:
+                        data_risiko = distribusi_bulanan[
+                            distribusi_bulanan["risiko_label"] == risiko
+                        ]
+
+                        fig_dist_cls.add_trace(
+                            go.Bar(
+                                x=data_risiko["Bulan"],
+                                y=data_risiko["Jumlah Wilayah"],
+                                name=risiko,
+                                marker=dict(
+                                    color=risk_color_map.get(risiko, "#94A3B8")
+                                ),
+                                text=data_risiko["Jumlah Wilayah"],
+                                textposition="outside"
+                            )
+                        )
+
+                    max_jumlah = distribusi_bulanan["Jumlah Wilayah"].max()
+
+                    fig_dist_cls.update_layout(
+                        height=390,
+                        barmode="group",
+                        xaxis_title="Bulan",
+                        yaxis_title="Jumlah Wilayah",
+                        legend_title="Indikasi Risiko",
+                        margin=dict(l=50, r=30, t=20, b=60),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        yaxis=dict(
+                            range=[0, max_jumlah * 1.18],
+                            gridcolor="#e5e7eb",
+                            zeroline=True,
+                            zerolinecolor="#cbd5e1"
+                        ),
+                        xaxis=dict(
+                            categoryorder="array",
+                            categoryarray=[month_name_map[m] for m in bulan_tersedia],
+                            tickfont=dict(size=12)
+                        ),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        )
+                    )
+
+                    st.plotly_chart(
+                        fig_dist_cls,
+                        use_container_width=True,
+                        theme=None,
+                        config={"displayModeBar": False}
+                    )
+
+            with st.expander("Lihat Rekap Bulanan Kelas Risiko"):
+                rekap_bulanan_df = eval_cls.copy()
+
+                if selected_year == 2022:
+                    rekap_bulanan_df["kelas_rekap"] = rekap_bulanan_df["pred_num"].apply(risk_label)
+                else:
+                    rekap_bulanan_df["kelas_rekap"] = rekap_bulanan_df["kelas_ndvi_num"].apply(risk_label)
+
+                rekap_bulanan_df["risiko_label"] = (
+                    rekap_bulanan_df["kelas_rekap"]
+                    .apply(risk_level)
+                    .str.replace("Indikasi Risiko ", "", regex=False)
+                )
+
+                rekap_bulanan_df["bulan"] = pd.to_numeric(
+                    rekap_bulanan_df["bulan"],
                     errors="coerce"
+                ).astype(int)
+
+                rekap_bulanan = (
+                    rekap_bulanan_df
+                    .groupby(["bulan", "risiko_label"])["Kabupaten/Kota"]
+                    .nunique()
+                    .reset_index(name="Jumlah Wilayah")
                 )
 
-                detail_cls["kelas_prediksi"] = detail_cls["Prediksi_Risiko_Model"].apply(
-                    lambda x: risk_label(x) if pd.notna(x) else "Tidak Diketahui"
+                tabel_rekap_bulanan = (
+                    rekap_bulanan
+                    .pivot_table(
+                        index="bulan",
+                        columns="risiko_label",
+                        values="Jumlah Wilayah",
+                        fill_value=0
+                    )
+                    .reset_index()
                 )
 
-            detail_cols_final = [
-                col for col in [
-                    "Kabupaten/Kota",
-                    "bulan",
-                    "tahun",
-                    "NDVI",
-                    "RR",
-                    "RH_AVG",
-                    "TAVG",
-                    "kelas_aktual",
-                    "kelas_prediksi"
+                risk_cols = ["Sangat Tinggi", "Tinggi", "Sedang", "Rendah"]
+
+                for col in risk_cols:
+                    if col not in tabel_rekap_bulanan.columns:
+                        tabel_rekap_bulanan[col] = 0
+
+                tabel_rekap_bulanan["Bulan"] = tabel_rekap_bulanan["bulan"].map(month_name_map)
+
+                tabel_rekap_bulanan = tabel_rekap_bulanan[
+                    ["Bulan", "Sangat Tinggi", "Tinggi", "Sedang", "Rendah"]
                 ]
-                if col in detail_cls.columns
-            ]
 
-            with st.expander("Lihat Detail Klasifikasi"):
                 st.dataframe(
-                    detail_cls[detail_cols_final],
+                    tabel_rekap_bulanan,
                     use_container_width=True,
                     hide_index=True
                 )
