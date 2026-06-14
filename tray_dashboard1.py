@@ -2313,24 +2313,35 @@ elif menu == "Klasifikasi Indikasi Risiko":
                 # Rekap jumlah wilayah per bulan dan per kategori risiko
                 distribusi_bulanan = (
                     dist_df
-                    .groupby(["bulan", "Bulan", "risiko_label"])["Kabupaten/Kota"]
+                    .groupby(["bulan", "risiko_label"])["Kabupaten/Kota"]
                     .nunique()
                     .reset_index(name="Jumlah Wilayah")
                 )
 
-                # Lengkapi agar setiap bulan tetap punya 4 kategori bar
-                bulan_tersedia = sorted(distribusi_bulanan["bulan"].dropna().unique())
-
-                full_index = pd.MultiIndex.from_product(
-                    [bulan_tersedia, risk_order],
-                    names=["bulan", "risiko_label"]
+                bulan_tersedia = sorted(
+                    dist_df["bulan"].dropna().astype(int).unique()
                 )
 
-                distribusi_bulanan = (
-                    distribusi_bulanan
-                    .set_index(["bulan", "risiko_label"])
-                    .reindex(full_index, fill_value=0)
-                    .reset_index()
+                # Buat kombinasi lengkap bulan x kategori risiko
+                template_bulanan = pd.DataFrame(
+                    [
+                        {"bulan": bulan, "risiko_label": risiko}
+                        for bulan in bulan_tersedia
+                        for risiko in risk_order
+                    ]
+                )
+
+                # Gabungkan hasil rekap dengan template
+                distribusi_bulanan = template_bulanan.merge(
+                    distribusi_bulanan,
+                    on=["bulan", "risiko_label"],
+                    how="left"
+                )
+
+                distribusi_bulanan["Jumlah Wilayah"] = (
+                    distribusi_bulanan["Jumlah Wilayah"]
+                    .fillna(0)
+                    .astype(int)
                 )
 
                 distribusi_bulanan["Bulan"] = distribusi_bulanan["bulan"].map(month_name_map)
