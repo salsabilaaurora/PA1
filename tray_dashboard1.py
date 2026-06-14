@@ -1254,7 +1254,7 @@ if menu == "Beranda":
                                 Model Terbaik
                             </div>
                             <div style="font-size:20px;font-weight:850;color:#1e3a8a;">
-                                RF
+                                Random Forest Regression
                             </div>
                             <div style="font-size:12px;color:#1e40af;margin-top:4px;">
                                 R² = 0.7078
@@ -1277,7 +1277,7 @@ if menu == "Beranda":
                             Kondisi Iklim Kering-Basah
                         </div>
                         <div style="font-size:13px;color:#475569;line-height:1.55;">
-                            Variabel dominan: <b>RH_AVG, SS, RR</b>
+                            Variabel dominan: <b>Kelembapan Udara Rata-rata, Lama Penyinaran Matahari, Curah Hujan</b>
                         </div>
                     </div>
 
@@ -1296,7 +1296,7 @@ if menu == "Beranda":
                             Kecepatan Angin
                         </div>
                         <div style="font-size:13px;color:#475569;line-height:1.55;">
-                            Variabel dominan: <b>FF_X, FF_AVG</b>
+                            Variabel dominan: <b>Kecepatan Angin Maksimum, Kecepatan Angin Rata-rata</b>
                         </div>
                     </div>
 
@@ -1315,7 +1315,7 @@ if menu == "Beranda":
                             Temperatur Udara
                         </div>
                         <div style="font-size:13px;color:#475569;line-height:1.55;">
-                            Variabel dominan: <b>TN, TX</b>
+                            Variabel dominan: <b>Suhu Minimum, Suhu Maksimum</b>
                         </div>
                     </div>
 
@@ -1334,7 +1334,7 @@ if menu == "Beranda":
                             Penggunaan Lahan dan Kependudukan
                         </div>
                         <div style="font-size:13px;color:#475569;line-height:1.55;">
-                            Variabel dominan: <b>irigasi, luas_hutan, pddk_laki</b>
+                            Variabel dominan: <b>Luas Lahan Irigasi, Luas Hutan, Jumlah Penduduk Laki-laki</b>
                         </div>
                     </div>
 
@@ -1352,7 +1352,7 @@ if menu == "Beranda":
                             Arah Angin dan Temporal
                         </div>
                         <div style="font-size:13px;color:#475569;line-height:1.55;">
-                            Variabel dominan: <b>DDD_cos, Is_Calm, tahun</b>
+                            Variabel dominan: <b>Komponen Arah Angin, Kondisi Angin Tenang, Tahun</b>
                         </div>
                     </div>
 
