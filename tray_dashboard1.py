@@ -346,7 +346,7 @@ st.markdown(
             }}
 
             header[data-testid="stHeader"]::before {{
-                display: block !important;
+                display: none !important;
                 left: 3.5rem !important;
                 top: 0.75rem !important;
                 font-size: 13px !important;
@@ -810,15 +810,35 @@ st.sidebar.markdown(
 )
 
 nav_options = {
-    "🏠  Beranda": "Beranda",
-    "📈  Prediksi NDVI": "Prediksi NDVI",
-    "🧩  Klasifikasi Indikasi Risiko": "Klasifikasi Indikasi Risiko"
+    "🏠 Beranda": "Beranda",
+    "📈 Prediksi NDVI": "Prediksi NDVI",
+    "🧩 Klasifikasi Risiko": "Klasifikasi Indikasi Risiko"
 }
 
-selected_nav = st.sidebar.radio(
-    "Navigasi",
+st.markdown(
+    """
+    <div style="
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:16px;
+        padding:12px 14px;
+        margin-bottom:16px;
+        box-shadow:0 2px 8px rgba(15,23,42,0.04);
+    ">
+        <div style="font-size:13px;color:#64748b;font-weight:700;margin-bottom:6px;">
+            Pilih Halaman Dashboard
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+selected_nav = st.radio(
+    "Pilih Halaman Dashboard",
     list(nav_options.keys()),
-    label_visibility="collapsed"
+    horizontal=True,
+    label_visibility="collapsed",
+    key="main_navigation"
 )
 
 menu = nav_options[selected_nav]
@@ -914,6 +934,20 @@ filtered = df[df["tahun"] == selected_year].copy()
 # =========================
 # PAGE 1: BERANDA
 # =========================
+
+st.markdown(
+    f"""
+    <div class="dashboard-hero">
+        <div class="hero-badge">🌾 Pemantauan NDVI Jawa Timur</div>
+        <h1 class="dashboard-title">{DASHBOARD_TITLE}</h1>
+        <div class="dashboard-subtitle">
+            Dashboard pemantauan kondisi vegetasi dan indikasi risiko kekeringan berbasis NDVI.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 if menu == "Beranda":
 
     if selected_city == "Semua":
