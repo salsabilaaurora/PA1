@@ -19,7 +19,7 @@ st.set_page_config(
     page_title=DASHBOARD_TITLE,
     page_icon="🌾",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # =========================
@@ -338,131 +338,10 @@ st.markdown(
         .block-container {{
             padding-top: 3rem !important;
         }}
-
-        @media (max-width: 768px) {{
-
-            header[data-testid="stHeader"] {{
-                height: 3.6rem !important;
-            }}
-
-            header[data-testid="stHeader"]::before {{
-                display: none !important;
-                left: 3.5rem !important;
-                top: 0.75rem !important;
-                font-size: 13px !important;
-                max-width: 72vw !important;
-                white-space: normal !important;
-                line-height: 1.2 !important;
-            }}
-
-            .block-container {{
-                padding-top: 1rem !important;
-                padding-left: 0.75rem !important;
-                padding-right: 0.75rem !important;
-                max-width: 100% !important;
-                overflow-x: hidden !important;
-            }}
-
-            div[data-testid="stHorizontalBlock"] {{
-                flex-wrap: wrap !important;
-            }}
-
-            div[data-testid="column"] {{
-                width: 100% !important;
-                flex: 1 1 100% !important;
-                min-width: 100% !important;
-            }}
-
-            .metric-card {{
-                height: auto !important;
-                min-height: 120px !important;
-                padding: 14px 16px !important;
-                margin-bottom: 12px !important;
-            }}
-
-            .metric-title {{
-                font-size: 17px !important;
-                line-height: 1.25 !important;
-            }}
-
-            .metric-value {{
-                font-size: 24px !important;
-            }}
-
-            .metric-help,
-            .metric-desc {{
-                font-size: 13px !important;
-            }}
-
-            .chart-card-title {{
-                font-size: 18px !important;
-                line-height: 1.3 !important;
-            }}
-
-            .chart-card-caption {{
-                font-size: 13px !important;
-                line-height: 1.4 !important;
-            }}
-
-            div[data-testid="stPlotlyChart"] {{
-                width: 100% !important;
-                overflow-x: hidden !important;
-            }}
-
-            table {{
-                font-size: 13px !important;
-            }}
-        }}
     </style>
     """,
     unsafe_allow_html=True
 )
-
-st.html("""
-<style>
-.shift-table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid #dbe2ea;
-    border-radius: 12px;
-    background: #ffffff;
-}
-
-.shift-table-wrap table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-    color: #0f172a;
-}
-
-.shift-table-wrap th {
-    background: #f1f5f9;
-    color: #0f172a;
-    font-weight: 800;
-    padding: 10px 12px;
-    border-bottom: 1px solid #cbd5e1;
-    text-align: left;
-    white-space: nowrap;
-}
-
-.shift-table-wrap td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-    .shift-table-wrap table {
-        font-size: 12px;
-    }
-
-    .shift-table-wrap th,
-    .shift-table-wrap td {
-        padding: 8px 10px;
-    }
-}
-</style>
-""")
 
 # =========================
 # LOAD DATA
@@ -810,35 +689,15 @@ st.sidebar.markdown(
 )
 
 nav_options = {
-    "🏠 Beranda": "Beranda",
-    "📈 Prediksi NDVI": "Prediksi NDVI",
-    "🧩 Klasifikasi Risiko": "Klasifikasi Indikasi Risiko"
+    "🏠  Beranda": "Beranda",
+    "📈  Prediksi NDVI": "Prediksi NDVI",
+    "🧩  Klasifikasi Indikasi Risiko": "Klasifikasi Indikasi Risiko"
 }
 
-st.markdown(
-    """
-    <div style="
-        background:#ffffff;
-        border:1px solid #e5e7eb;
-        border-radius:16px;
-        padding:12px 14px;
-        margin-bottom:16px;
-        box-shadow:0 2px 8px rgba(15,23,42,0.04);
-    ">
-        <div style="font-size:13px;color:#64748b;font-weight:700;margin-bottom:6px;">
-            Pilih Halaman Dashboard
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-selected_nav = st.radio(
-    "Pilih Halaman Dashboard",
+selected_nav = st.sidebar.radio(
+    "Navigasi",
     list(nav_options.keys()),
-    horizontal=True,
-    label_visibility="collapsed",
-    key="main_navigation"
+    label_visibility="collapsed"
 )
 
 menu = nav_options[selected_nav]
@@ -934,20 +793,6 @@ filtered = df[df["tahun"] == selected_year].copy()
 # =========================
 # PAGE 1: BERANDA
 # =========================
-
-st.markdown(
-    f"""
-    <div class="dashboard-hero">
-        <div class="hero-badge">🌾 Pemantauan NDVI Jawa Timur</div>
-        <h1 class="dashboard-title">{DASHBOARD_TITLE}</h1>
-        <div class="dashboard-subtitle">
-            Dashboard pemantauan kondisi vegetasi dan indikasi risiko kekeringan berbasis NDVI.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 if menu == "Beranda":
 
     if selected_city == "Semua":
@@ -1023,7 +868,7 @@ if menu == "Beranda":
                 border:1px solid #dbe2ea;
                 border-radius:18px;
                 padding:18px 22px;
-                height:auto;
+                height:170px;
                 box-sizing:border-box;
                 display:flex;
                 flex-direction:column;
@@ -1216,7 +1061,7 @@ if menu == "Beranda":
     left, middle, factor_col = st.columns(3, gap="medium")
 
     with left:
-        with st.container(border=True):
+        with st.container(border=True, height=CARD_HEIGHT):
             st.markdown(
                 """
                 <div class="chart-card-title">Distribusi Indikasi Risiko Kekeringan</div>
@@ -1300,7 +1145,7 @@ if menu == "Beranda":
             )
 
     with middle:
-        with st.container(border=True):
+        with st.container(border=True, height=CARD_HEIGHT):
             st.markdown(
                 """
                 <div class="chart-card-title">Wilayah dengan NDVI Terendah</div>
@@ -1330,7 +1175,7 @@ if menu == "Beranda":
                 xaxis_title="Nilai NDVI",
                 yaxis_title="",
                 showlegend=False,
-                margin=dict(l=115, r=20, t=5, b=45),
+                margin=dict(l=170, r=50, t=5, b=45),
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(
@@ -1354,7 +1199,7 @@ if menu == "Beranda":
             )
 
     with factor_col:
-        with st.container(border=True):
+        with st.container(border=True, height=CARD_HEIGHT):
             st.markdown(
                 """
                 <div class="chart-card-title">Faktor yang Berkaitan dengan NDVI</div>
@@ -1688,7 +1533,7 @@ if menu == "Beranda":
             )
         )
         fig_treemap.update_layout(
-            height=480,
+            height=680,
             margin=dict(l=5, r=5, t=5, b=5),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)"
@@ -2347,7 +2192,7 @@ elif menu == "Prediksi NDVI":
                         xaxis_title="Rata-rata NDVI Prediksi",
                         yaxis_title="",
                         showlegend=False,
-                        margin=dict(l=115, r=25, t=10, b=55),
+                        margin=dict(l=170, r=75, t=10, b=55),
                         paper_bgcolor="#ffffff",
                         plot_bgcolor="#ffffff",
                         xaxis=dict(
@@ -2529,28 +2374,18 @@ elif menu == "Prediksi NDVI":
                         lambda x: f"{x:+.3f}"
                     )
 
-                    shift_table_final = shift_table[
-                        [
-                            "Kabupaten/Kota",
-                            "NDVI Historis",
-                            "NDVI Prediksi",
-                            "Perubahan NDVI",
-                            "Status Pergeseran"
-                        ]
-                    ].copy()
-
-                    table_html = shift_table_final.to_html(
-                        index=False,
-                        escape=False,
-                        classes="shift-table"
-                    )
-
-                    st.html(
-                        f"""
-                        <div class="shift-table-wrap">
-                            {table_html}
-                        </div>
-                        """
+                    st.dataframe(
+                        shift_table[
+                            [
+                                "Kabupaten/Kota",
+                                "NDVI Historis",
+                                "NDVI Prediksi",
+                                "Perubahan NDVI",
+                                "Status Pergeseran"
+                            ]
+                        ],
+                        use_container_width=True,
+                        hide_index=True
                     )
 
             else:
