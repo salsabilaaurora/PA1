@@ -374,88 +374,6 @@ def load_eval_data():
 def load_eval_file(file_name):
     return pd.read_csv(file_name)
 
-
-@st.cache_data
-def load_lstm_folder(folder_name="Prediksi_LSTM"):
-    folder = Path(folder_name)
-    files = sorted(folder.glob("prediksi_lstm_*.csv"))
-
-    if len(files) == 0:
-        return None, None
-
-    forecast_series = []
-    eval_rows = []
-
-    for file in files:
-        city_name = (
-            file.stem
-            .replace("prediksi_lstm_", "")
-            .replace("_", " ")
-        )
-
-        temp = pd.read_csv(file)
-
-        temp["TANGGAL"] = pd.to_datetime(temp["TANGGAL"])
-        temp = temp.sort_values("TANGGAL")
-
-        aktual = pd.to_numeric(temp["Aktual"], errors="coerce")
-        prediksi = pd.to_numeric(temp["Prediksi"], errors="coerce")
-
-        s = pd.Series(
-            prediksi.values,
-            index=temp["TANGGAL"],
-            name=city_name
-        )
-
-        forecast_series.append(s)
-
-        valid = pd.DataFrame({
-            "Aktual": aktual,
-            "Prediksi": prediksi
-        }).dropna()
-
-        if not valid.empty:
-            error = valid["Aktual"] - valid["Prediksi"]
-
-            mse = np.mean(error ** 2)
-            rmse = np.sqrt(mse)
-            mae = np.mean(np.abs(error))
-
-            nonzero = valid["Aktual"] != 0
-            if nonzero.sum() > 0:
-                mape = np.mean(
-                    np.abs(error[nonzero] / valid.loc[nonzero, "Aktual"])
-                ) * 100
-            else:
-                mape = np.nan
-
-            denom = np.abs(valid["Aktual"]) + np.abs(valid["Prediksi"])
-            smape_valid = denom != 0
-            if smape_valid.sum() > 0:
-                smape = np.mean(
-                    2 * np.abs(error[smape_valid]) / denom[smape_valid]
-                ) * 100
-            else:
-                smape = np.nan
-
-            eval_rows.append({
-                "Kabupaten/Kota": city_name,
-                "MSE": mse,
-                "RMSE": rmse,
-                "MAE": mae,
-                "MAPE (%)": mape,
-                "SMAPE (%)": smape
-            })
-
-    lstm_forecast = pd.concat(forecast_series, axis=1)
-    lstm_forecast.index = pd.to_datetime(lstm_forecast.index)
-    lstm_forecast["tahun"] = lstm_forecast.index.year
-    lstm_forecast["bulan"] = lstm_forecast.index.month
-
-    lstm_eval = pd.DataFrame(eval_rows)
-
-    return lstm_forecast, lstm_eval
-
 @st.cache_data
 def load_historical_ndvi():
     possible_files = [
@@ -533,12 +451,6 @@ if Path("GSTAR_ARIMA_Forecast_NDVI.csv").exists() and Path("GSTAR_ARIMA_Evaluati
     forecast_data_map["GSTAR-ARIMA"] = df_gstar_arima
     forecast_eval_map["GSTAR-ARIMA"] = df_eval_gstar_arima
 
-# LSTM dari folder Prediksi_LSTM
-df_lstm, df_eval_lstm = load_lstm_folder("Prediksi_LSTM")
-
-if df_lstm is not None and df_eval_lstm is not None:
-    forecast_data_map["LSTM"] = df_lstm
-    forecast_eval_map["LSTM"] = df_eval_lstm
 
 # df_gstar_arima = load_forecast_file("historis_plus_forecast_gstar_arima.csv")
 # df_lstm = load_forecast_file("historis_plus_forecast_lstm.csv")
@@ -2408,29 +2320,95 @@ elif menu == "Klasifikasi Indikasi Risiko":
             "XGBoost",
             "Random Forest",
             "Random Forest",
-            "XGBoost"
+            "XGBoost",
+            "Ordinal Logit",
+            "Ordinal Logit",
+            "Ordinal Logit"
         ],
+
         "Pendekatan": [
             "Oversampling",
             "Oversampling",
             "SMOTE",
             "Base Model",
             "SMOTE",
-            "Base Model"
+            "Base Model",
+            "Base Model",
+            "Oversampling",
+            "SMOTE"
         ],
+
         "Model": [
             "XGBoost dengan Oversampling",
             "Random Forest dengan Oversampling",
             "XGBoost dengan SMOTE",
             "Random Forest Base Model",
             "Random Forest dengan SMOTE",
-            "XGBoost Base Model"
+            "XGBoost Base Model",
+            "Ordinal Logit",
+            "Ordinal Logit dengan Oversampling",
+            "Ordinal Logit dengan SMOTE"
         ],
-        "Accuracy": [0.7810, 0.7920, 0.7755, 0.7974, 0.7810, 0.7682],
-        "Precision Weighted": [0.7795, 0.7954, 0.7735, 0.8017, 0.7822, 0.7639],
-        "Recall Weighted": [0.7810, 0.7920, 0.7755, 0.7974, 0.7810, 0.7682],
-        "F1-Macro": [0.7505, 0.7486, 0.7479, 0.7445, 0.7401, 0.7223],
-        "F1-Weighted": [0.7793, 0.7870, 0.7734, 0.7917, 0.7802, 0.7597]
+
+        "Accuracy": [
+            0.7810,
+            0.7920,
+            0.7755,
+            0.7974,
+            0.7810,
+            0.7682,
+            0.649635,
+            0.447080,
+            0.467153
+        ],
+
+        "Precision Weighted": [
+            0.7795,
+            0.7954,
+            0.7735,
+            0.8017,
+            0.7822,
+            0.7639,
+            0.626518,
+            0.564288,
+            0.575831
+        ],
+
+        "Recall Weighted": [
+            0.7810,
+            0.7920,
+            0.7755,
+            0.7974,
+            0.7810,
+            0.7682,
+            0.649635,
+            0.447080,
+            0.467153
+        ],
+
+        "F1-Macro": [
+            0.7505,
+            0.7486,
+            0.7479,
+            0.7445,
+            0.7401,
+            0.7223,
+            0.616545,
+            0.471630,
+            0.488457
+        ],
+
+        "F1-Weighted": [
+            0.7793,
+            0.7870,
+            0.7734,
+            0.7917,
+            0.7802,
+            0.7597,
+            0.616545,
+            0.471630,
+            0.488457
+        ]
     })
 
     best_model_name = "XGBoost dengan Oversampling"
@@ -2443,7 +2421,7 @@ elif menu == "Klasifikasi Indikasi Risiko":
     with d1:
         selected_algorithm = st.selectbox(
             "Pilih Algoritma",
-            ["XGBoost", "Random Forest"],
+            ["XGBoost", "Random Forest", "Ordinal Logit"],
             key="klasifikasi_algoritma"
         )
 
@@ -2794,7 +2772,7 @@ elif menu == "Klasifikasi Indikasi Risiko":
                     },
                     mapbox_style="carto-positron",
                     center={"lat": -7.54, "lon": 112.23},
-                    zoom=6.4,
+                    zoom=7.2,
                     opacity=0.78
                 )
 
